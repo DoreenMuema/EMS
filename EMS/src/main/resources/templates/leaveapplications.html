@@ -1,0 +1,26 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Leave Applications</title>
+</head>
+<body th:replace="layout :: layout">
+<div th:fragment="content">
+    <h2>Leave Applications</h2>
+    <form th:action="@{/leaves}" method="post">
+        <input type="text" name="employeeName" placeholder="Employee Name" required />
+        <input type="date" name="leaveStartDate" required />
+        <input type="date" name="leaveEndDate" required />
+        <button type="submit">Submit Leave</button>
+    </form>
+
+    <h3>Pending Leave Applications</h3>
+    <ul>
+        <li th:each="leave : ${leaves}">
+            <span th:text="${leave.employeeName}">Employee Name</span> -
+            <span th:text="${leave.startDate}">Start Date</span> to
+            <span th:text="${leave.endDate}">End Date</span>
+        </li>
+    </ul>
+</div>
+</body>
+</html>

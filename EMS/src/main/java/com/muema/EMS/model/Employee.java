@@ -18,11 +18,11 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    private String username;
+    private String password;
+    private String role;
     private String name;
-
     private String email;
-
-    private String age;
-
+    private int age;
     private String designation;
 }

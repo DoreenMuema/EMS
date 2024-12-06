@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskAssignement </title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="/js/login.js" defer></script> <!-- Ensure this path is correct -->
+</head>
+<body th:replace="layout :: layout">
+<div th:fragment="content">
+    <h2>Task Assignments</h2>
+    <form th:action="@{/tasks}" method="post">
+        <input type="text" name="taskName" placeholder="Task Name" required />
+        <input type="text" name="taskDescription" placeholder="Description" required />
+        <button type="submit">Add Task</button>
+    </form>
+
+    <h3>Existing Tasks</h3>
+    <ul>
+        <li th:each="task : ${tasks}">
+            <span th:text="${task.name}">Task Name</span> -
+            <span th:text="${task.description}">Task Description</span>
+        </li>
+    </ul>
+</div>
+</body>
+</html>
