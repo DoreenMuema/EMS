@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         if (!token || !employeeId) {
             console.error("Missing token or employee ID. Redirecting to login...");
-            window.location.href = '/employee-login.html';
+            window.location.href = '/employeeLogin';
             return;
         }
 

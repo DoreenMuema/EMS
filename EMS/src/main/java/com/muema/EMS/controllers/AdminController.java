@@ -2,14 +2,12 @@ package com.muema.EMS.controllers;
 
 import com.muema.EMS.model.Employee;
 import com.muema.EMS.model.LeaveApplication;
+import com.muema.EMS.model.Notification;
 import com.muema.EMS.model.Task;
 import com.muema.EMS.repo.EmployeeRepository;
 import com.muema.EMS.repo.LeaveRepository;
 import com.muema.EMS.repo.TaskRepository;
-import com.muema.EMS.services.EmployeeService;
-import com.muema.EMS.services.JwtUtils;
-import com.muema.EMS.services.LeaveService;
-import com.muema.EMS.services.TaskService;
+import com.muema.EMS.services.*;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,13 +23,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.GrantedAuthority;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/")
@@ -44,18 +44,20 @@ public class AdminController {
     private final PasswordEncoder passwordEncoder;
     private final LeaveService leaveService;
     private final TaskService taskService ;
+    private final NotificationService notificationService;
 
     @Autowired
     public AdminController(JwtUtils jwtUtils,
                            EmployeeService employeeService,
                            AuthenticationManager authenticationManager,
-                           PasswordEncoder passwordEncoder, LeaveService leaveService, TaskService taskService, EmployeeRepository employeeRepository, TaskRepository taskRepository, LeaveRepository leaveRepository) {
+                           PasswordEncoder passwordEncoder, LeaveService leaveService, TaskService taskService, EmployeeRepository employeeRepository, TaskRepository taskRepository, LeaveRepository leaveRepository, NotificationService notificationService) {
         this.jwtUtils = jwtUtils;
         this.employeeService = employeeService;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.leaveService = leaveService;
         this.taskService = taskService;
+        this.notificationService = notificationService;
     }
 
     @PostMapping("/admin_login")
@@ -72,15 +74,23 @@ public class AdminController {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Generate JWT token
-            String jwtToken = jwtUtils.generateToken(username, "ROLE_ADMIN"); // Ensure this is called every time
+            // Get the role of the authenticated user from the authentication object
+            String role = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst()
+                    .orElse("ROLE_USER"); // Default to ROLE_USER if no role is found
+
+            // Generate JWT token with role included
+            String jwtToken = jwtUtils.generateToken(username, role); // Use the user's role here
 
             // Set token in the response header
             response.setHeader("Authorization", "Bearer " + jwtToken);
 
+            // Prepare the response body with token, message, and role
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("token", jwtToken);
             responseBody.put("message", "Login successful");
+            responseBody.put("role", role);  // Include the role in the response
 
             return ResponseEntity.ok(responseBody);
         } catch (BadCredentialsException e) {
@@ -92,7 +102,7 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/admin")
+    @GetMapping("/dashboard")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<Map<String, Object>> adminDashboard(HttpServletRequest request, HttpServletResponse response) {
         // Retrieve the token from the request header
@@ -128,28 +138,36 @@ public class AdminController {
         // Set the token in the response header (optional)
         response.setHeader("Authorization", "Bearer " + token);
 
-        // Prepare the response body with mocked data
+        // Get actual data from the services
+        List<Employee> employees = employeeService.getAllEmployee();
+        List<LeaveApplication> leaveApplications = leaveService.getAllLeaves();
+        List<Task> tasks = taskService.getAllTasks();
+        List<Notification> notifications = notificationService.getAllNotifications();
+
+        // Prepare the response body
         Map<String, Object> responseBody = new HashMap<>();
 
-        // Mock employees data
-        List<Map<String, Object>> employees = new ArrayList<>();
-        employees.add(Map.of("id", 1, "username", "admin", "role", "ROLE_ADMIN"));
-        employees.add(Map.of("id", 2, "username", "john_doe", "role", "ROLE_USER"));
+        // Map employees data
+        responseBody.put("employees", employees.stream()
+                .map(employee -> Map.of("id", employee.getId(), "username", employee.getUsername(), "role", employee.getRole()))
+                .collect(Collectors.toList()));
 
-        // Mock leave applications data
-        List<Map<String, Object>> leaveApplications = new ArrayList<>();
-        leaveApplications.add(Map.of("id", 101, "employee", "admin", "startDate", "2024-12-01", "endDate", "2024-12-05", "status", "Approved"));
-        leaveApplications.add(Map.of("id", 102, "employee", "john_doe", "startDate", "2024-12-10", "endDate", "2024-12-12", "status", "Pending"));
+        // Map leave applications data
+        responseBody.put("leaveApplications", leaveApplications.stream()
+                .map(leave -> Map.of("id", leave.getId(), "employee", leave.getEmployee().getUsername(), "startDate", leave.getStartDate(), "endDate", leave.getEndDate(), "status", leave.getStatus()))
+                .collect(Collectors.toList()));
 
-        // Mock tasks data
-        List<Map<String, Object>> tasks = new ArrayList<>();
-        tasks.add(Map.of("id", 1001, "employee", "admin", "description", "Complete report", "dueDate", "2024-12-05", "status", "In Progress"));
-        tasks.add(Map.of("id", 1002, "employee", "john_doe", "description", "Prepare presentation", "dueDate", "2024-12-07", "status", "Completed"));
+        // Map tasks data
+        responseBody.put("tasks", tasks.stream()
+                .map(task -> Map.of("id", task.getId(), "employee", task.getEmployee().getUsername(), "description", task.getDescription(), "dueDate", task.getDueDate(), "status", task.getStatus()))
+                .collect(Collectors.toList()));
 
-        // Add data to response body
-        responseBody.put("employees", employees);
-        responseBody.put("leaveApplications", leaveApplications);
-        responseBody.put("tasks", tasks);
+        // Map notifications data
+        responseBody.put("notifications", notifications.stream()
+                .map(notification -> Map.of("id", notification.getId(), "message", notification.getMessage(), "date", notification.getTimestamp()))
+                .collect(Collectors.toList()));
+
+        // Add additional info to the response
         responseBody.put("user", username);
         responseBody.put("role", "ROLE_ADMIN");
         responseBody.put("message", "Welcome to the admin dashboard");

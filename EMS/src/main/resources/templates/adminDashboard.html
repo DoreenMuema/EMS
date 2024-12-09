@@ -4,63 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-
-    <!-- Admin Dashboard JavaScript -->
     <script src="/js/dashboard/adminDashboard.js" defer></script>
+    <!-- Add Bootstrap CSS for styling -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+        .btn {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-
-<!-- Sidebar and Top Bar Wrapper -->
-<div class="d-flex" id="wrapper">
-
-    <!-- Sidebar -->
-    <div class="bg-light border-right" id="sidebar">
-        <div class="sidebar-header text-center">
+<div class="container-fluid" id="adminDashboard">
+    <div class="row">
+        <div class="col-md-3">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+                <li class="list-group-item"><a href="/admin/employees" class="nav-link">Employees</a></li>
+                <li class="list-group-item"><a href="/admin/leave-applications" class="nav-link">Leave Applications</a></li>
+                <li class="list-group-item"><a href="/admin/tasks" class="nav-link">Tasks</a></li>
+                <li class="list-group-item"><a href="/admin/settings" class="nav-link">Settings</a></li>
+                <li class="list-group-item"><a href="/admin/logout" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+        <div class="col-md-9 content">
             <h3>Admin Dashboard</h3>
+            <p id="welcomeMessage">Welcome to the admin dashboard!</p>
+
+            <div class="section">
+                <h4>Employees</h4>
+                <table class="table table-bordered" id="employeesTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Employee data will be populated here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h4>Leave Applications</h4>
+                <table class="table table-bordered" id="leaveApplicationsTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Leave applications data will be populated here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h4>Tasks</h4>
+                <table class="table table-bordered" id="tasksTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Task data will be populated here dynamically -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
-            <li class="list-group-item"><a href="/admin/employees" class="nav-link">Employees</a></li>
-            <li class="list-group-item"><a href="/admin/leave-applications" class="nav-link">Leave Applications</a></li>
-            <li class="list-group-item"><a href="/admin/tasks" class="nav-link">Tasks</a></li>
-            <li class="list-group-item"><a href="/admin/settings" class="nav-link">Settings</a></li>
-            <li class="list-group-item"><a href="/admin/logout" class="nav-link">Logout</a></li>
-        </ul>
     </div>
-
-    <!-- Page Content Wrapper -->
-    <div id="page-content-wrapper" class="flex-fill">
-
-        <!-- Top Bar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <button class="btn btn-primary" id="menu-toggle">☰</button>
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
-            <span class="ml-auto" id="welcomeMessage">Welcome, Admin</span>
-        </nav>
-
-        <!-- Main Content -->
-        <div class="container mt-4">
-            <h2>Admin Dashboard</h2>
-
-            <!-- Employee List Section -->
-            <h3>Employees</h3>
-            <ul id="employeeList" class="list-group"></ul>
-
-            <!-- Leave Applications Section -->
-            <h3 class="mt-3">Leave Applications</h3>
-            <ul id="leaveApplications" class="list-group"></ul>
-
-            <!-- Tasks Section -->
-            <h3 class="mt-3">Tasks</h3>
-            <ul id="taskList" class="list-group"></ul>
-        </div>
-    </div>
+    <div id="dashboard"></div>
 </div>
-
 </body>
 </html>

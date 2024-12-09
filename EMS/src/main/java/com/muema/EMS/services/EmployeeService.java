@@ -14,4 +14,5 @@ public interface EmployeeService {
     void deleteById(Long id);
     Optional<Employee> findByUsername(String username);
     Employee createEmployee(Employee employee);
+    void changePassword(Long employeeId, String newPassword);
 }

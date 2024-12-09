@@ -1,65 +1,89 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('token'); // Retrieve token from local storage
-
-    if (!token) {
-        alert('Unauthorized access. Please log in.');
-        window.location.href = 'admin-login.html'; // Redirect to login if no token
-        return;
+// After page loads, fetch the dashboard data
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        loadDashboardData(token);
+    } else {
+        alert('You need to log in to access the dashboard.');
+        window.location.href = '/login.html';  // Redirect to login page
     }
+});
 
+async function loadDashboardData(token) {
     try {
-        const response = await fetch('/api/admin/admin', {
+        console.log('Fetching dashboard data...');
+        const response = await fetch('/api/admin/dashboard', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // Include token in headers
+                'Authorization': `Bearer ${token}`,  // Pass token in Authorization header
             },
         });
 
+        const dashboardData = await response.json();
+        console.log('Dashboard Data:', dashboardData);
+
         if (!response.ok) {
-            if (response.status === 401) {
-                alert('Session expired. Please log in again.');
-                localStorage.removeItem('token'); // Clear invalid token
-                window.location.href = 'admin-login.html';
-            } else {
-                throw new Error('Failed to load dashboard data');
-            }
-            return;
+            throw new Error('Failed to load dashboard data.');
         }
 
-        const data = await response.json();
-        console.log(data);
-
-        // Populate welcome message
-        document.getElementById('welcomeMessage').innerText = `Welcome, ${data.user}!`;
-
-        // Populate employees
-        const employeeList = document.getElementById('employeeList');
-        data.employees.forEach(employee => {
-            const li = document.createElement('li');
-            li.classList.add('list-group-item');
-            li.innerText = `${employee.username} (${employee.role})`;
-            employeeList.appendChild(li);
-        });
-
-        // Populate leave applications
-        const leaveApplications = document.getElementById('leaveApplications');
-        data.leaveApplications.forEach(leave => {
-            const li = document.createElement('li');
-            li.classList.add('list-group-item');
-            li.innerText = `${leave.employee}: ${leave.startDate} to ${leave.endDate} (${leave.status})`;
-            leaveApplications.appendChild(li);
-        });
-
-        // Populate tasks
-        const taskList = document.getElementById('taskList');
-        data.tasks.forEach(task => {
-            const li = document.createElement('li');
-            li.classList.add('list-group-item');
-            li.innerText = `${task.employee}: ${task.description} (Due: ${task.dueDate})`;
-            taskList.appendChild(li);
-        });
+        // Populate the dashboard with JSON data
+        populateDashboard(dashboardData);
     } catch (error) {
-        console.error('Error loading dashboard:', error);
-        alert('An error occurred while loading the dashboard. Please try again.');
+        console.error('Error fetching dashboard data:', error);
+        alert('Failed to load the dashboard data.');
     }
-});
+}
+
+function populateDashboard(dashboardData) {
+    const dashboardContainer = document.getElementById('dashboard');
+    if (!dashboardContainer) {
+        console.error('Dashboard container not found.');
+        return;
+    }
+
+    // Clear existing content
+    dashboardContainer.innerHTML = '';
+
+    // Populate message
+    const header = document.createElement('h1');
+    header.textContent = dashboardData.message;
+    dashboardContainer.appendChild(header);
+
+    // User info
+    const userInfo = document.createElement('p');
+    userInfo.innerHTML = `<strong>User:</strong> ${dashboardData.user}`;
+    dashboardContainer.appendChild(userInfo);
+
+    // Tasks
+    const tasksHeader = document.createElement('h3');
+    tasksHeader.textContent = 'Tasks:';
+    dashboardContainer.appendChild(tasksHeader);
+
+    const tasksList = document.createElement('ul');
+    dashboardData.tasks.forEach((task) => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            <strong>Description:</strong> ${task.description} <br>
+            <strong>Status:</strong> ${task.status} <br>
+            <strong>Due Date:</strong> ${new Date(task.dueDate).toLocaleString()} <br>
+            <strong>Employee:</strong> ${task.employee}
+        `;
+        tasksList.appendChild(listItem);
+    });
+    dashboardContainer.appendChild(tasksList);
+
+    // Notifications
+    const notificationsHeader = document.createElement('h3');
+    notificationsHeader.textContent = 'Notifications:';
+    dashboardContainer.appendChild(notificationsHeader);
+
+    const notificationsList = document.createElement('ul');
+    dashboardData.notifications.forEach((notification) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${new Date(notification.date).toLocaleString()}: ${notification.message}`;
+        notificationsList.appendChild(listItem);
+    });
+    dashboardContainer.appendChild(notificationsList);
+
+    console.log('Dashboard content populated.');
+}

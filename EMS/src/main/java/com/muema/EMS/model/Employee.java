@@ -25,4 +25,9 @@ public class Employee {
     private String email;
     private int age;
     private String designation;
+
+    // Method to change the password
+    public void changePassword(String newPassword) {
+        this.password = newPassword; // Set the new password
+    }
 }

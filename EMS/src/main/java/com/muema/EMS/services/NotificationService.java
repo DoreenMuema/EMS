@@ -35,4 +35,9 @@ public class NotificationService {
         // Query notifications by employee ID
         return notificationRepository.findByEmployeeId(employeeId);
     }
+
+
+    public List<Notification> getAllNotifications() {
+        return notificationRepository.findAll();
+    }
 }

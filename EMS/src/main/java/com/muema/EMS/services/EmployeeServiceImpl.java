@@ -63,6 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return Optional.ofNullable(employeeRepository.findByUsername(username));
     }
 
+    @Override
     public Employee createEmployee(Employee employee) {
         if (employee.getUsername() == null || employee.getUsername().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be empty");
@@ -85,6 +86,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         employee.setPassword(passwordEncoder.encode(employee.getPassword()));
         return employeeRepository.save(employee);
+    }
+
+    @Override
+    public void changePassword(Long employeeId, String newPassword) {
+        // Check if employee exists
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() ->
+                new RuntimeException("Employee not found with id: " + employeeId));
+
+        // Encode and update password
+        employee.setPassword(passwordEncoder.encode(newPassword));
+        employeeRepository.save(employee); // Save updated employee with new password
     }
 
     @PostConstruct

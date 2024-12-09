@@ -29,7 +29,7 @@ form.addEventListener('submit', async (e) => {
             // Display loading screen while redirecting
             document.getElementById('loading').style.display = 'block';
             setTimeout(() => {
-                window.location.href = '/employeeProfile';
+                window.location.href = '/employeeDashboard';
             }, 2000);
         } else {
             const error = await response.json();

@@ -82,39 +82,36 @@ public class EmployeeController {
     }
 
 
-    @PostMapping("/employee_register")
-    public ResponseEntity<Map<String, Object>> registerEmployee(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
+    @PutMapping("/change-password/{employeeId}")
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> passwordData,
+                                                              @PathVariable Long employeeId,
+                                                              Principal principal) {
+        String newPassword = passwordData.get("newPassword");
 
-        // Check if password is not empty or null
-        if (password == null || password.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password cannot be null or empty"));
+        // Check if new password is provided
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password cannot be null or empty"));
         }
 
         try {
-            // Check if the username already exists
-            if (employeeService.findByUsername(username).isPresent()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Username is already taken"));
+            // Find the employee from the database by their username (using the Principal)
+            String username = principal.getName();
+            Optional<Employee> optionalEmployee = employeeService.findByUsername(username);
+
+            if (optionalEmployee.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Employee not found"));
             }
 
-            // Create the Employee object and set its properties
-            Employee employee = new Employee();
-            employee.setUsername(username);
-            employee.setRole("ROLE_EMPLOYEE"); // Set the role with prefix
-            employee.setPassword(passwordEncoder.encode(password)); // Encode the password
-            employeeService.save(employee);
+            // Call the service method to change the password
+            employeeService.changePassword(employeeId, newPassword);
 
-            // Return success response
-            return ResponseEntity.ok(Map.of("success", true, "message", "Employee registered successfully"));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Password changed successfully"));
 
         } catch (Exception e) {
-            // Return error response if something goes wrong
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error during registration: " + e.getMessage()));
+                    .body(Map.of("error", "Error changing password: " + e.getMessage()));
         }
     }
-
 
     @GetMapping("/profile/{employeeId}")
     public ResponseEntity<Map<String, Object>> viewProfile(Principal principal) {

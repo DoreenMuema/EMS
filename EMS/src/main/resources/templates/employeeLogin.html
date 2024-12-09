@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
+    <title>Employee Login</title>
 
     <!-- Link to External CSS File using Thymeleaf -->
     <link rel="stylesheet" th:href="@{/css/styles.css}">
@@ -11,21 +11,14 @@
     <!-- Bootstrap CSS for layout -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-    <!-- Optional JavaScript for Bootstrap features -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <!-- Link to your Admin Login JavaScript -->
-    <script src="/js/login/adminlogin.js" defer></script>
 </head>
 <body>
 
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <h2 class="text-center">Admin Login</h2>
-            <form id="adminLoginForm" th:action="@{/api/admin/admin_login}" method="post">
+            <h2 class="text-center">Employee Login</h2>
+            <form id="employeeLoginForm" th:action="@{/api/employee_login}" method="post">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" name="username" class="form-control" id="username" placeholder="Enter your username" required>
@@ -40,6 +33,6 @@
         </div>
     </div>
 </div>
-
+<script src="/js/login/employeeLogin.js" defer></script>
 </body>
 </html>

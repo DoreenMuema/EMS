@@ -57,12 +57,16 @@ public class SecurityConfig {
                 .cors().and() // Enable CORS
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/",
+
+                                "/adminLogin",
+                                "/employeeLogin",
                                 "/js/**",
                                 "/css/**",
-                                "/employee_login",
                                 "/api/employee_login",
+                                "/api/admin/admin_login",
                                 "/static/**").permitAll()
                         .requestMatchers("/api/admin/**",
+                                "/api/admin/new",
                                 "/admin",
                                 "/api/admin/admin"
                         ).hasRole("ADMIN") // Protect admin endpoints
