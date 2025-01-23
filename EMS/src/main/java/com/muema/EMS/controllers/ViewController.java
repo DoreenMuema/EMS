@@ -19,5 +19,54 @@ public class ViewController {
     public String employeeLogin() {
         return "employeeLogin";
     }
+    @GetMapping("/adminDashboard")
+    public String adminDashboard() {
+        return "adminDashboard";
+    }
+    @GetMapping("/employeeDashboard")
+        public String employeeDashboard(){
+        return "employeeDashboard";
+    }
+    @GetMapping("/manageEmployees")
+    public String manageEmployees() {
+        return "manageEmployees";
+    }
+    @GetMapping("/employeeProfile")
+     public String employeeProfile() {
+        return "employeeProfile";
+    }
+    @GetMapping("/employeeLeaveApplication")
+    public String employeeLeaveApplication() {
+        return "employeeLeaveApplication";
+    }
+    @GetMapping("/manageLeaves")
+    public String manageLeaves() {
+        return "manageLeaves";
+    }
+    @GetMapping("/manageTasks")
+    public String manageTasks() {
+        return "manageTasks";
+    }
+    @GetMapping("/employeeTasks")
+    public String employeeTasks() {
+        return "employeeTasks";
+    }
+    @GetMapping("/financeRequest")
+    public String financeRequest() {
+        return "financeRequest";
+    }
+    @GetMapping("/employeefinanceRequest")
+    public String employeefinanceRequest() {
+        return "employeefinanceRequest";
+    }
+    @GetMapping("/employeeNotifications")
+    public String employeeNotifications() {
+        return "employeeNotifications";
+    }
+    @GetMapping("/notifications")
+    public String notifications() {
+        return "notifications";
+    }
+
 }
 

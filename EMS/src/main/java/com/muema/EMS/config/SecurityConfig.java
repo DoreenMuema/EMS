@@ -3,9 +3,11 @@ package com.muema.EMS.config;
 import com.muema.EMS.filters.JwtFilter;
 import com.muema.EMS.model.Employee;
 import com.muema.EMS.repo.EmployeeRepository;
+import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,6 +26,7 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     private final EmployeeRepository employeeRepository;
     private final JwtFilter jwtFilter;
 
@@ -35,15 +38,15 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> {
-            Employee employee = employeeRepository.findByUsername(username);
+        return email -> {
+            Employee employee = employeeRepository.findByEmail(email);
 
             if (employee == null) {
-                throw new UsernameNotFoundException("User  not found with username: " + username);
+                throw new UsernameNotFoundException("User not found with email: " + email);
             }
 
             return new org.springframework.security.core.userdetails.User(
-                    employee.getUsername(),
+                    employee.getEmail(),
                     employee.getPassword(),
                     Collections.singletonList(new SimpleGrantedAuthority(employee.getRole()))
             );
@@ -53,13 +56,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() // Disable CSRF for stateless APIs
-                .cors().and() // Enable CORS
+                .csrf().disable()
+                .cors().and()
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/",
-
+                                "/employeeNotifications",
+                                "/notifications",
+                                "/manageLeaves",
+                                "manageTasks",
+                                "/employeefinanceRequest",
+                                "/employeeTasks",
+                                "/financeRequest",
+                                "/employeeLeaveApplication",
+                                "/employeeProfile",
+                                "/manageEmployees",
+                                "/adminDashboard",
+                                "/employeeDashboard",
                                 "/adminLogin",
                                 "/employeeLogin",
+                                "/uploads/**",
                                 "/js/**",
                                 "/css/**",
                                 "/api/employee_login",
@@ -69,25 +84,32 @@ public class SecurityConfig {
                                 "/api/admin/new",
                                 "/admin",
                                 "/api/admin/admin"
-                        ).hasRole("ADMIN") // Protect admin endpoints
+                        ).hasRole("ADMIN")
                         .requestMatchers("/api/profile/{employeeId}",
                                 "/api//apply-leave/{employeeId}",
-                                "/api/notifications/").hasAnyRole("EMPLOYEE", "ADMIN") // Allow access to profile for both roles
-                        .anyRequest().authenticated() // Require authentication for all other requests
+                                "/api/notifications/").hasAnyRole("EMPLOYEE", "ADMIN")
+                        .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless session management
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter to the filter chain
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Use BCrypt for password encoding
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager(); // Provide the AuthenticationManager bean
+        return authenticationConfiguration.getAuthenticationManager();
     }
+
+    @Bean
+    public LayoutDialect layoutDialect() {
+        return new LayoutDialect();
+    }
+
+
 }

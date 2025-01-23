@@ -3,99 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
     <script src="/js/dashboard/adminDashboard.js" defer></script>
-    <!-- Add Bootstrap CSS for styling -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .content {
-            padding: 30px;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .table th, .table td {
-            text-align: center;
-        }
-        .btn {
-            margin-top: 10px;
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="container-fluid" id="adminDashboard">
-    <div class="row">
-        <div class="col-md-3">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item"><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
-                <li class="list-group-item"><a href="/admin/employees" class="nav-link">Employees</a></li>
-                <li class="list-group-item"><a href="/admin/leave-applications" class="nav-link">Leave Applications</a></li>
-                <li class="list-group-item"><a href="/admin/tasks" class="nav-link">Tasks</a></li>
-                <li class="list-group-item"><a href="/admin/settings" class="nav-link">Settings</a></li>
-                <li class="list-group-item"><a href="/admin/logout" class="nav-link">Logout</a></li>
-            </ul>
+<div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="https://via.placeholder.com/45" alt="Employee EMS Logo">
+            <span>Employee EMS</span>
         </div>
-        <div class="col-md-9 content">
-            <h3>Admin Dashboard</h3>
-            <p id="welcomeMessage">Welcome to the admin dashboard!</p>
+        <ul>
+            <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
+            <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
+            <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
+            <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
+            <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
 
-            <div class="section">
-                <h4>Employees</h4>
-                <table class="table table-bordered" id="employeesTable">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>Role</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- Employee data will be populated here dynamically -->
-                    </tbody>
-                </table>
+    <!-- Main Content -->
+    <div class="main">
+        <div class="top-navbar">
+            <div class="nav-left">
+                <h1>Admin Dashboard</h1>
             </div>
-
-            <div class="section">
-                <h4>Leave Applications</h4>
-                <table class="table table-bordered" id="leaveApplicationsTable">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Employee</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- Leave applications data will be populated here dynamically -->
-                    </tbody>
-                </table>
+            <div class="nav-right">
+                <ul>
+                    <li><a href="/notifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
+                </ul>
             </div>
+        </div>
+        <!-- Notifications List (add this in your HTML) -->
+        <div id="notificationsSection">
+            <ul id="notificationsList"></ul> <!-- List of notifications -->
+        </div>
 
-            <div class="section">
-                <h4>Tasks</h4>
-                <table class="table table-bordered" id="tasksTable">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Employee</th>
-                        <th>Description</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- Task data will be populated here dynamically -->
-                    </tbody>
-                </table>
+
+        <!-- Skills / Statistics -->
+        <div class="main-skills">
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Employee Management</h3>
+                    <button id="viewEmployeeBtn">View Employee</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Leave Application</h3>
+                    <button id="viewLeaveBtn" >Leave</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Task Management</h3>
+                    <button id="tasksBtn">Tasks</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Finance</h3>
+                    <button id="adminFinanceBtn">View Finance</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="recent-activities">
+            <h2>Recent Activities</h2>
+            <div class="activities-box">
+                <ul class="tabs">
+                    <li class="active">Today</li>
+                    <li>Leave Requests</li>
+                    <li>Tasks</li>
+                </ul>
+                <div class="activities">
+                    <div class="activity">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Task Report Submission</p>
+                        <button>Submit</button>
+                    </div>
+                    <div class="activity">
+                        <i class="fas fa-bell"></i>
+                        <p>Reminder: Upcoming Team Meeting</p>
+                        <button>View Details</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div id="dashboard"></div>
 </div>
 </body>
 </html>

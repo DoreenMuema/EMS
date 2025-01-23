@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Leave Application</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="https://via.placeholder.com/45" alt="Employee EMS Logo">
+            <span>Employee EMS</span>
+        </div>
+        <ul>
+            <li><a href="/employeeDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/employeeProfile"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="/employeeLeaveApplication"><i class="fas fa-envelope"></i> Leave Requests</a></li>
+            <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
+            <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
+            <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+        <div class="logout">
+            <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </nav>
+    <<!-- Main Content -->
+    <div class="main">
+        <div class="top-navbar">
+            <div class="nav-left">
+                <h1>Employee Dashboard</h1>
+            </div>
+            <div class="nav-right">
+                <ul>
+                    <li>
+                        <a href="/employeeNotifications">
+                            <i class="fas fa-bell" id="notificationBell"></i>
+                        </a>
+                </ul>
+            </div>
+        </div>
+        <!-- Dashboard Top Section -->
+    <!-- Main Content -->
+    <div class="main">
+        <button id="newRequestBtn">New Request</button>
+        <!-- Leave Requests Table -->
+        <div class="card">
+            <h3>Leave Requests</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Days</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th>Date Requested</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Dynamic data for leave requests will go here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Leave Balances Display -->
+        <div class="card leave-balances-card">
+            <h3>Your Leave Balances</h3>
+            <div class="leave-balances">
+                <!-- Annual Leave Balance Table -->
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Leave Type</th>
+                        <th>Available Days</th>
+                        <th>Eligible Days</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Dynamic data for leave balances will go here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+    </div>
+</div>
+
+<!-- Leave Request Modal -->
+<div id="leaveModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Apply for Leave</h3>
+        <form id="leaveForm">
+            <label for="leaveType">Leave Type:</label>
+            <select id="leaveType" name="leaveType" required>
+                <option value="Annual">Annual</option>
+                <option value="Sick">Sick</option>
+                <option value="Compassionate">Compassionate</option>
+                <option value="Paternity">Paternity</option>
+            </select>
+
+            <label for="days">Number of Days:</label>
+            <input type="number" id="days" name="days" required min="1">
+
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate" required>
+
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate" required>
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="4" placeholder="Optional details..."></textarea>
+
+            <button type="submit">Submit Leave Application</button>
+            <button type="cancel">Cancel</button>
+        </form>
+    </div>
+</div>
+
+
+<script src="/js/dashboard/employeeDashboard.js"></script>
+</body>
+</html>

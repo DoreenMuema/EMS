@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Finance Requests</title>
+    <link rel="stylesheet" href="/css/dashboard.css"> <!-- Link to your CSS file -->
+    <script src="/js/dashboard/employeetasks.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="https://via.placeholder.com/45" alt="Employee EMS Logo">
+            <span>Employee EMS</span>
+        </div>
+        <ul>
+            <li><a href="/employeeDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/employeeProfile"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="/employeeLeaveApplication"><i class="fas fa-envelope"></i> Leave Requests</a></li>
+            <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
+            <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
+            <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="top-navbar">
+            <div class="nav-left">
+                <h1>My tasks</h1>
+            </div>
+            <div class="nav-right">
+                <ul>
+                    <li><a href="/employeeNotifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
+
+                </ul>
+            </div>
+        </div>
+
+        <!-- Task Table -->
+        <div class="content">
+            <table id="taskTable">
+                <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Task Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Tasks will be dynamically loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Request Extension Form -->
+            <div id="extensionRequest" style="display: none;">
+                <h2>Request Task Extension</h2>
+                <form id="extensionForm">
+                    <input type="hidden" id="taskId">
+                    <label for="extensionReason">Reason for Extension:</label>
+                    <textarea id="extensionReason" name="extensionReason" required></textarea>
+                    <button type="submit">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

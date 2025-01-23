@@ -1,0 +1,99 @@
+/* Reset some default margins and paddings */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: #f7f9fc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background: #fff;
+    padding: 30px;  /* Reduced padding for smaller card */
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    text-align: left;  /* Align content to the left */
+    max-width: 400px;  /* Reduced max width for smaller card */
+    width: 100%;
+}
+
+h2 {
+    font-size: 24px;  /* Reduced heading size */
+    color: #333;
+    margin-bottom: 30px;  /* Reduced space between header and form */
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 20px;  /* Reduced spacing between form fields */
+}
+
+label {
+    font-size: 16px;  /* Reduced font size for labels */
+    color: #555;
+    margin-bottom: 8px;  /* Reduced spacing between label and input */
+}
+
+input.form-control {
+    font-size: 16px;  /* Reduced font size for inputs */
+    padding: 12px;  /* Reduced padding inside input fields */
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;  /* Ensures inputs fill the width of the container */
+}
+
+input.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+button.btn-primary {
+    padding: 12px;  /* Reduced button padding */
+    font-size: 18px;  /* Reduced font size for the button */
+    border-radius: 8px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    transition: background-color 0.3s ease;
+    width: 100%;  /* Button takes full width of the container */
+}
+
+button.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+#response {
+    color: #d9534f;
+    font-size: 14px;  /* Reduced font size for response */
+    display: none;
+    margin-top: 15px;  /* Reduced margin above response */
+}
+.password-wrapper {
+    position: relative;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #7875B5;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.eye-icon:focus {
+    outline: none;
+}
+

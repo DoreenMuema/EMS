@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,57 +20,63 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
     private JwtUtils jwtUtils;
+    private UserDetailsService userDetailsService;
+
+    // Constructor-based injection remains, but use setter injection for dependencies
+    @Autowired
+    public void setJwtUtils(JwtUtils jwtUtils) {
+        this.jwtUtils = jwtUtils;
+    }
 
     @Autowired
-    @Lazy
-    private UserDetailsService userDetailsService;
+    public void setUserDetailsService(@Lazy UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // Extract the Authorization header from the request
+
         String authorizationHeader = request.getHeader("Authorization");
-
         String token = null;
-        String username = null;
+        String email = null;
 
-        // Check if the Authorization header is present and starts with "Bearer "
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            // Extract the token from the header
+            // Extract token from the header
             token = authorizationHeader.substring(7);
-            // Extract the username from the token
-            username = jwtUtils.extractUsername(token);
 
-            // If the username is valid, proceed with authentication
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            try {
+                // Extract the email from the token
+                email = jwtUtils.extractEmail(token);
 
-                // Validate the token
-                boolean isValidToken = jwtUtils.validateToken(token, userDetails);
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Load user details by username (email)
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                // Log the validation process for debugging
-                System.out.println("Extracted username: " + username);
-                System.out.println("Is token valid: " + isValidToken);
+                    // Validate the token
+                    boolean isValidToken = jwtUtils.validateToken(token, userDetails);
 
-                if (isValidToken) {
-                    System.out.println("Valid token for user: " + username);
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(request);
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                } else {
-                    // Invalid token: set status to Unauthorized (401) and return immediately
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    System.out.println("Invalid token for user: " + username);
-                    return;
+                    if (isValidToken) {
+                        // Set the authentication context
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(request);
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        // Invalid token, respond with unauthorized status
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        return;
+                    }
                 }
+            } catch (Exception e) {
+                // In case of any exception, respond with unauthorized status
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         }
+
+        // Continue filter chain
         filterChain.doFilter(request, response);
     }
-
-
-
 }

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="/js/dashboard/adminDashboard.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="https://via.placeholder.com/45" alt="Employee EMS Logo">
+            <span>Employee EMS</span>
+        </div>
+        <ul>
+            <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
+            <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
+            <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
+            <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
+            <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="top-navbar">
+            <div class="nav-left">
+                <h1>Admin Dashboard</h1>
+            </div>
+            <div class="nav-right">
+                <ul>
+                    <li><a href="/notifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
+
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="leave-tables-container">
+            <div class="leave-requests">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Leave Applications</h3>
+                    </div>
+                    <!-- Employee Table -->
+                    <table id="leaveTable">
+                        <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="leave-table-body">
+                        <!-- Rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/js/dashboard/adminDashboard.js"></script>
+</body>
+</html>

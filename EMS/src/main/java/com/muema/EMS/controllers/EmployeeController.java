@@ -1,30 +1,42 @@
 package com.muema.EMS.controllers;
 
-import com.muema.EMS.model.Employee;
-import com.muema.EMS.model.LeaveApplication;
-import com.muema.EMS.model.Notification;
-import com.muema.EMS.model.Task;
+import com.muema.EMS.model.*;
+import com.muema.EMS.repo.EmployeeRepository;
+import com.muema.EMS.repo.FinanceRequestRepository;
+import com.muema.EMS.repo.LeaveRepository;
+import com.muema.EMS.repo.LeavesBalancesRepository;
 import com.muema.EMS.services.*;
+import io.jsonwebtoken.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@RestController  // Changed from @Controller to @RestController
+import static org.hibernate.query.sqm.tree.SqmNode.log;
+
+@RestController
 @RequestMapping("/api")
 public class EmployeeController {
 
+    private final Logger logger = LoggerFactory.getLogger(EmployeeController.class);
     private final JwtUtils jwtUtils;
     private final EmployeeService employeeService;
     private final AuthenticationManager authenticationManager;
@@ -32,6 +44,11 @@ public class EmployeeController {
     private final LeaveService leaveService;
     private final NotificationService notificationService;
     private final TaskService taskService;
+    private final LeavesBalancesRepository leavesBalancesRepository;
+    private final LeaveRepository leaveRepository;
+    private final FinanceRequestService financeRequestService;
+    private final EmployeeRepository employeeRepository;
+    private final FinanceRequestRepository financeRequestRepository;
 
     @Autowired
     public EmployeeController(JwtUtils jwtUtils,
@@ -39,7 +56,10 @@ public class EmployeeController {
                               AuthenticationManager authenticationManager,
                               PasswordEncoder passwordEncoder,
                               LeaveService leaveService,
-                              NotificationService notificationService, TaskService taskService) {
+                              NotificationService notificationService,
+                              TaskService taskService,
+                              LeavesBalancesRepository leavesBalancesRepository,
+                              LeaveRepository leaveRepository, FinanceRequestService financeRequestService, EmployeeRepository employeeRepository, FinanceRequestRepository financeRequestRepository) {
         this.jwtUtils = jwtUtils;
         this.employeeService = employeeService;
         this.authenticationManager = authenticationManager;
@@ -47,87 +67,93 @@ public class EmployeeController {
         this.leaveService = leaveService;
         this.notificationService = notificationService;
         this.taskService = taskService;
+        this.leavesBalancesRepository = leavesBalancesRepository;
+        this.leaveRepository = leaveRepository;
+        this.financeRequestService = financeRequestService;
+        this.employeeRepository = employeeRepository;
+        this.financeRequestRepository = financeRequestRepository;
     }
 
     @PostMapping("/employee_login")
     public ResponseEntity<Map<String, Object>> loginEmployee(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
+        String email = body.get("email");
         String password = body.get("password");
 
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (email == null || password == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email and password must be provided"));
+        }
 
-            Optional<Employee> optionalEmployee = employeeService.findByUsername(username);
+        try {
+            // Fetch employee details to check the activation status
+            Optional<Employee> optionalEmployee = employeeService.findByEmail(email);
             if (optionalEmployee.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
             }
 
             Employee employee = optionalEmployee.get();
-            String accessToken = jwtUtils.generateToken(employee.getUsername(), employee.getRole());
+
+            // Check if the account is deactivated
+            if (!employee.isActive()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Account is deactivated"));
+            }
+
+            // Proceed with authentication
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Generate a JWT token
+            String accessToken = jwtUtils.generateToken(employee.getEmail(), employee.getRole());
+
+            // Build the response
             Map<String, Object> response = new HashMap<>();
             response.put("employeeId", employee.getId());
             response.put("accessToken", accessToken);
-            response.put("username", employee.getUsername());
+            response.put("email", employee.getEmail());
             response.put("role", employee.getRole());
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Authentication failed: " + e.getMessage()));
         }
     }
 
 
-    @PutMapping("/change-password/{employeeId}")
-    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> passwordData,
-                                                              @PathVariable Long employeeId,
-                                                              Principal principal) {
-        String newPassword = passwordData.get("newPassword");
-
-        // Check if new password is provided
-        if (newPassword == null || newPassword.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "New password cannot be null or empty"));
-        }
-
-        try {
-            // Find the employee from the database by their username (using the Principal)
-            String username = principal.getName();
-            Optional<Employee> optionalEmployee = employeeService.findByUsername(username);
-
-            if (optionalEmployee.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Employee not found"));
-            }
-
-            // Call the service method to change the password
-            employeeService.changePassword(employeeId, newPassword);
-
-            return ResponseEntity.ok(Map.of("success", true, "message", "Password changed successfully"));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error changing password: " + e.getMessage()));
-        }
-    }
-
     @GetMapping("/profile/{employeeId}")
-    public ResponseEntity<Map<String, Object>> viewProfile(Principal principal) {
+    @Secured("ROLE_EMPLOYEE, ROLE_ADMIN")
+    public ResponseEntity<Map<String, Object>> viewProfile(Principal principal, @PathVariable String employeeId) {
         try {
-            String username = principal.getName();
-            Optional<Employee> optionalEmployee = employeeService.findByUsername(username);
+            String email = principal.getName(); // Fetch the logged-in user's email
+            Optional<Employee> optionalEmployee = employeeService.findByEmail(email);
 
             if (optionalEmployee.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Employee not found"));
             }
 
             Employee employee = optionalEmployee.get();
+
+            // Prepare the response with fallback values
             Map<String, Object> response = new HashMap<>();
-            response.put("username", employee.getUsername());
-            response.put("role", employee.getRole());
-            response.put("email", employee.getEmail());
+            response.put("email", employee.getEmail() != null ? employee.getEmail() : "N/A");
+            response.put("role", employee.getRole() != null ? employee.getRole() : "N/A");
+            response.put("designation", employee.getDesignation() != null ? employee.getDesignation() : "N/A");
+            response.put("firstName", employee.getFirstName() != null ? employee.getFirstName() : "N/A");
+            response.put("surname", employee.getSurname() != null ? employee.getSurname() : "N/A");
+            response.put("otherName", employee.getOtherName() != null ? employee.getOtherName() : "N/A");
+            response.put("phone", employee.getPhone() != null ? employee.getPhone() : "N/A");
+            response.put("lastLogin", employee.getLastLogin() != null ? employee.getLastLogin().toString() : "Not Available");
+            response.put("passwordExpiry", employee.getPasswordExpiry() != null ? employee.getPasswordExpiry().toString() : "Not Available");
+            response.put("idNumber", employee.getIdNumber() != null ? employee.getIdNumber() : "N/A");  // Ensure idNumber is included
+            response.put("employmentDate", employee.getEmploymentDate() != null ? employee.getEmploymentDate().toString() : "N/A");
+            response.put("employmentType", employee.getEmploymentType() != null ? employee.getEmploymentType() : "N/A");
+            response.put("dob", employee.getDob() != null ? employee.getDob().toString() : "N/A");  // Ensure dob is included
+            response.put("gender", employee.getGender() != null ? employee.getGender() : "N/A");
+            response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "N/A");
+            response.put("age", employee.getAge() != null ? employee.getAge() : "N/A");
+            response.put("address", employee.getAddress() != null ? employee.getAddress() : "N/A");
 
             return ResponseEntity.ok(response);
 
@@ -137,30 +163,227 @@ public class EmployeeController {
         }
     }
 
+
+    @PutMapping("/profile/update/{employeeId}")
+    @Secured("ROLE_EMPLOYEE, ROLE_ADMIN")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> profileData, Principal principal, @PathVariable String employeeId) {
+        try {
+            // Get the email of the currently authenticated user
+            String email = principal.getName();
+            Optional<Employee> optionalEmployee = employeeService.findByEmail(email);
+
+            if (optionalEmployee.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Employee not found"));
+            }
+
+            Employee employee = optionalEmployee.get();
+
+            // Extract updated fields from the request
+            String newFirstName = profileData.get("firstName");
+            String newSurname = profileData.get("surname");
+            String newOtherName = profileData.get("otherName");
+            String newPhone = profileData.get("phone");
+            String newDob = profileData.get("dob");
+            String newGender = profileData.get("gender");
+            String newDepartment = profileData.get("department");
+            String newAge = profileData.get("age"); // Accept age as part of the request
+            String newAddress = profileData.get("address");
+            String newIdNumber = profileData.get("idNumber"); // Accept idNumber as part of the request
+
+            // Update the employee's details if provided
+            if (newFirstName != null && !newFirstName.isEmpty()) {
+                employee.setFirstName(newFirstName);
+            }
+            if (newSurname != null && !newSurname.isEmpty()) {
+                employee.setSurname(newSurname);
+            }
+            if (newOtherName != null && !newOtherName.isEmpty()) {
+                employee.setOtherName(newOtherName);
+            }
+            if (newPhone != null && !newPhone.isEmpty()) {
+                employee.setPhone(newPhone);
+            }
+            if (newDob != null && !newDob.isEmpty()) {
+                employee.setDob(newDob);  // Update dob if provided
+            }
+            if (newGender != null && !newGender.isEmpty()) {
+                employee.setGender(newGender);
+            }
+            if (newDepartment != null && !newDepartment.isEmpty()) {
+                employee.setDepartment(newDepartment);
+            }
+
+            // If age is provided in the request, set it directly
+            if (newAge != null && !newAge.isEmpty()) {
+                employee.setAge(Integer.parseInt(newAge)); // Set the age directly
+            }
+            if (newAddress != null && !newAddress.isEmpty()) {
+                employee.setAddress(newAddress); // Set the address
+            }
+            if (newIdNumber != null && !newIdNumber.isEmpty()) {
+                employee.setIdNumber(newIdNumber); // Update idNumber if provided
+            }
+
+            // Save updated employee
+            employeeService.save(employee);
+
+            // Prepare response with updated details
+            Map<String, Object> response = new HashMap<>();
+            response.put("firstName", employee.getFirstName());
+            response.put("surname", employee.getSurname());
+            response.put("otherName", employee.getOtherName());
+            response.put("phone", employee.getPhone());
+            response.put("dob", employee.getDob());
+            response.put("gender", employee.getGender());
+            response.put("department", employee.getDepartment());
+            response.put("age", employee.getAge());  // Include age in the response
+            response.put("address", employee.getAddress()); // Include address in the response
+            response.put("idNumber", employee.getIdNumber()); // Include idNumber in the response
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update profile: " + e.getMessage()));
+        }
+    }
+
+
     @PostMapping("/apply-leave/{employeeId}")
+    @Secured({"ROLE_EMPLOYEE", "ROLE_ADMIN"})
     public ResponseEntity<Map<String, Object>> applyForLeave(@PathVariable Long employeeId,
                                                              @RequestBody LeaveApplication leaveApplication) {
+        logger.debug("Entering applyForLeave with employeeId: {} and leaveApplication: {}", employeeId, leaveApplication);
+
         try {
-            // Process leave application
-            LeaveApplication application = leaveService.applyForLeave(employeeId, leaveApplication);
+            // Validate inputs
+            if (employeeId == null) {
+                logger.error("Employee ID is null");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Employee ID cannot be null"));
+            }
+            if (leaveApplication == null) {
+                logger.error("LeaveApplication is null");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Leave application cannot be null"));
+            }
 
-            // Send notification upon successful leave application
-            notificationService.sendNotification(employeeId, "Your leave application has been submitted.");
+            // Apply for leave
+            LeaveApplication savedLeaveApplication = leaveService.applyForLeave(employeeId, leaveApplication);
+            logger.debug("Leave application saved successfully: {}", savedLeaveApplication);
 
-            // Response map with application details
-            Map<String, Object> response = Map.of(
-                    "id", application.getId(),
-                    "status", application.getStatus(),
-                    "employee", application.getEmployee().getUsername(),
-                    "message", "Leave application submitted successfully."
+            // Send notification to admin
+            String adminMessage = String.format(
+                    "New leave request from Employee ID: %d. Leave Type: %s, Days Requested: %d, Start Date: %s, End Date: %s",
+                    employeeId, leaveApplication.getLeaveType(), leaveApplication.getDaysRequested(),
+                    leaveApplication.getStartDate(), leaveApplication.getEndDate()
             );
+
+            // Send real-time WebSocket notification to admin
+            notificationService.sendNotificationToAdmin(adminMessage);
+
+            // Send real-time WebSocket notification to the employee
+            String employeeMessage = String.format("Your leave request has been submitted and is awaiting approval. Leave Type: %s, Start Date: %s, End Date: %s",
+                    leaveApplication.getLeaveType(), leaveApplication.getStartDate(), leaveApplication.getEndDate());
+            notificationService.sendNotificationToEmployee(employeeId, employeeMessage);
+
+            logger.debug("Notifications sent: Admin - {}, Employee - {}", adminMessage, employeeMessage);
+
+            // Prepare response
+            Map<String, Object> response = Map.of(
+                    "id", savedLeaveApplication.getId(),
+                    "type", savedLeaveApplication.getLeaveType(),
+                    "days", savedLeaveApplication.getDaysRequested(),
+                    "startDate", savedLeaveApplication.getStartDate(),
+                    "endDate", savedLeaveApplication.getEndDate(),
+                    "status", savedLeaveApplication.getStatus(),
+                    "action", "Pending",
+                    "description", savedLeaveApplication.getDescription()
+            );
+
+            logger.debug("Prepared response: {}", response);
 
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            // Employee not found or invalid input
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
+            logger.error("IllegalArgumentException occurred: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("An error occurred while applying for leave: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred: " + e.getMessage()));
+        } finally {
+            logger.debug("Exiting applyForLeave with employeeId: {}", employeeId);
+        }
+    }
+
+    @GetMapping("/leave-balances/{employeeId}")
+    @Secured("ROLE_EMPLOYEE, ROLE_ADMIN")
+    public ResponseEntity<Map<String, Object>> getLeaveBalances(@PathVariable Long employeeId) {
+        try {
+            // Fetch leave balances for the employee
+            Map<String, Integer> leaveBalances = leaveService.getLeaveBalances(employeeId);
+
+            // Ensure leave balances are not empty, initialize if necessary
+            leaveService.initializeLeaveBalancesIfEmpty(employeeId);
+
+            // Define eligible leave days per leave type
+            Map<String, Integer> eligibleLeaveDays = new HashMap<>();
+            eligibleLeaveDays.put("annualLeave", 21);  // Example eligible leave days
+            eligibleLeaveDays.put("compassionateLeave", Integer.MAX_VALUE);  // Unlimited
+            eligibleLeaveDays.put("sickLeave", 7);  // Example eligible leave days
+            eligibleLeaveDays.put("paternityLeave", 14);  // Example eligible leave days
+
+            // Initialize available balance to eligible balance if not already set
+            Map<String, Object> response = new HashMap<>();
+
+            // Add eligible and available leave types to the response map
+            for (String leaveType : eligibleLeaveDays.keySet()) {
+                Integer available = leaveBalances.getOrDefault(leaveType, eligibleLeaveDays.get(leaveType)); // Use eligible days if no balance found
+                Integer eligible = eligibleLeaveDays.get(leaveType);
+
+                // Add to the response map
+                response.put(leaveType, Map.of(
+                        "eligible", eligible,
+                        "available", available
+                ));
+            }
+
+            // Return the response map
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            // Internal server errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/employee/leaves/{employeeId}")
+    @Secured("ROLE_EMPLOYEE, ROLE_ADMIN")
+    public ResponseEntity<Object> getAllLeavesByEmployee(@PathVariable Long employeeId) {
+        try {
+            // Fetch all leave applications for the specified employee
+            List<LeaveApplication> leaveApplications = leaveService.getLeavesByEmployeeId(employeeId);
+
+            if (leaveApplications.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "No leave applications found for the employee."));
+            }
+
+            // Prepare response with leave details
+            List<Map<String, Object>> response = leaveApplications.stream()
+                    .map(leave -> {
+                        Map<String, Object> leaveDetails = new HashMap<>();
+                        leaveDetails.put("id", leave.getId());
+                        leaveDetails.put("leaveType", leave.getLeaveType());
+                        leaveDetails.put("days", leave.getDays());
+                        leaveDetails.put("startDate", leave.getStartDate());
+                        leaveDetails.put("endDate", leave.getEndDate());
+                        leaveDetails.put("status", leave.getStatus());
+                        leaveDetails.put("dateRequested", leave.getDateRequested());
+                        return leaveDetails;
+                    })
+                    .toList();
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             // Internal server errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -169,25 +392,202 @@ public class EmployeeController {
     }
 
 
-    @GetMapping("/notifications/{employeeId}")
-    public ResponseEntity<List<Notification>> getEmployeeNotifications(@PathVariable Long employeeId) {
+    @PostMapping("/tasks/extension-request/{taskId}")
+    public ResponseEntity<Task> requestExtensionForTask(@PathVariable Long taskId, @RequestBody String extensionReason) {
+        logger.debug("Entering requestExtensionForTask with taskId: {} and extensionReason: {}", taskId, extensionReason);
+
         try {
-            List<Notification> notifications = notificationService.getNotificationsForEmployee(employeeId);
-            return ResponseEntity.ok(notifications);
+            // Request extension for the task
+            Task updatedTask = taskService.requestTaskExtension(taskId, extensionReason);
+            logger.debug("Task extension requested successfully: {}", updatedTask);
+
+            // Send WebSocket notification to the employee (task assignee)
+            String employeeMessage = String.format("Your task with ID: %d has requested an extension. Reason: %s", taskId, extensionReason);
+            notificationService.sendNotificationToEmployee(updatedTask.getEmployee().getId(), employeeMessage);
+
+            // Send WebSocket notification to admin
+            String adminMessage = String.format("Task ID: %d has requested an extension. Reason: %s", taskId, extensionReason);
+            notificationService.sendNotificationToAdmin(adminMessage);
+
+            // Prepare response
+            return ResponseEntity.ok(updatedTask);
+
         } catch (Exception e) {
+            logger.error("An error occurred while requesting task extension: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
+                    .body((Task) Map.of("error", "An error occurred: " + e.getMessage()));
+        } finally {
+            logger.debug("Exiting requestExtensionForTask with taskId: {}", taskId);
         }
     }
 
+    @PutMapping("/tasks/complete/{taskId}")
+    public ResponseEntity<Task> markTaskAsCompleted(@PathVariable Long taskId) {
+        logger.debug("Entering markTaskAsCompleted with taskId: {}", taskId);
+
+        try {
+            // Mark the task as completed
+            Task updatedTask = taskService.markTaskAsCompleted(taskId);
+            logger.debug("Task marked as completed: {}", updatedTask);
+
+            // Send WebSocket notification to the employee (task assignee)
+            String employeeMessage = String.format("Your task with ID: %d has been marked as completed.", taskId);
+            notificationService.sendNotificationToEmployee(updatedTask.getEmployee().getId(), employeeMessage);
+
+            // Send WebSocket notification to admin
+            String adminMessage = String.format("Task ID: %d has been marked as completed.", taskId);
+            notificationService.sendNotificationToAdmin(adminMessage);
+
+            // Prepare response
+            return ResponseEntity.ok(updatedTask);
+
+        } catch (Exception e) {
+            logger.error("An error occurred while marking task as completed: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body((Task) Map.of("error", "An error occurred: " + e.getMessage()));
+        } finally {
+            logger.debug("Exiting markTaskAsCompleted with taskId: {}", taskId);
+        }
+    }
+
+
+    // Get tasks for a specific employee (available to admin and the employee themselves)
     @GetMapping("/tasks/{employeeId}")
+    @Secured({"ROLE_EMPLOYEE", "ROLE_ADMIN"})
     public ResponseEntity<List<Task>> getEmployeeTasks(@PathVariable Long employeeId) {
         try {
             List<Task> tasks = taskService.getTasksByEmployeeId(employeeId);
             return ResponseEntity.ok(tasks);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    // Request an extension for a task
+    @PostMapping("/request-extension/{taskId}")
+    @Secured("ROLE_EMPLOYEE")
+    public ResponseEntity<Task> requestExtension(@PathVariable Long taskId, @RequestBody String extensionReason) {
+        Task updatedTask = taskService.requestTaskExtension(taskId, extensionReason);
+        return ResponseEntity.ok(updatedTask);
+    }
+
+    @GetMapping("/finance-requests/{employeeId}")
+    @Secured({"ROLE_ADMIN", "ROLE_EMPLOYEE"})
+    public ResponseEntity<List<Map<String, Serializable>>> getRequestsByEmployeeId(@PathVariable Long employeeId) {
+        try {
+            // Log the received employeeId
+            logger.debug("Fetching financial requests for employeeId: {}", employeeId);
+
+            List<FinancialRequest> requests = financeRequestService.getFinancialRequestsByEmployeeId(employeeId);
+
+            // Log the retrieved requests
+            if (requests != null && !requests.isEmpty()) {
+                logger.debug("Found {} requests for employeeId: {}", requests.size(), employeeId);
+            } else {
+                logger.debug("No requests found for employeeId: {}", employeeId);
+            }
+
+            // Map FinancialRequest to response format
+            List<Map<String, Serializable>> response = requests.stream().map(request -> {
+                Map<String, Serializable> requestMap = new HashMap<>();
+                requestMap.put("id", request.getId());
+                requestMap.put("itemDescription", request.getItemDescription());
+                requestMap.put("amount", request.getAmount());
+                requestMap.put("status", request.getStatus());
+                requestMap.put("createdDate", request.getCreatedDate());
+                requestMap.put("type", request.getType().name());
+                requestMap.put("proofFileUrl", request.getProofFileUrl() != null ? new String(request.getProofFileUrl()) : null);
+                return requestMap;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Failed to retrieve financial requests", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
+    @PostMapping(value = "/finance-requests/{employeeId}", consumes = {"multipart/form-data"})
+    @Secured({"ROLE_ADMIN", "ROLE_EMPLOYEE"})
+    public ResponseEntity<Map<String, Object>> createRequest(
+            @RequestParam("itemDescription") String itemDescription,
+            @RequestParam("amount") Double amount,
+            @RequestParam("type") String type,
+            @RequestParam("proofFile") MultipartFile proofFile,
+            @PathVariable Long employeeId) {
+        try {
+            // Log input values
+            logger.debug("Received request: itemDescription={}, amount={}, type={}, employeeId={}", itemDescription, amount, type, employeeId);
+
+            // Validate file content type
+            String contentType = proofFile.getContentType();
+            if (!contentType.equals("application/pdf") && !contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Only PDFs and images are allowed"));
+            }
+
+            // Convert file to byte array (this may still be needed depending on your requirements)
+            byte[] fileBytes = proofFile.getBytes();
+
+            // Define the directory to save the proof file (e.g., in the "uploads" folder)
+            String uploadsDir = "C:/path/to/upload/directory/";  // Replace with actual path
+            Path uploadPath = Paths.get(uploadsDir);
+
+            // Check if the directory exists; if not, create it
+            if (!Files.exists(uploadPath)) {
+                try {
+                    Files.createDirectories(uploadPath);
+                } catch (IOException e) {
+                    logger.error("Failed to create upload directory", e);
+                    return ResponseEntity.status(500).body(Map.of("error", "Failed to create upload directory"));
+                }
+            }
+
+            // Generate the filename and save the file
+            String fileName = System.currentTimeMillis() + "-" + proofFile.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+
+            // Save the file to the server
+            Files.write(filePath, fileBytes);
+
+            // Construct the URL for accessing the file (adjust this URL according to your server setup)
+            String fileUrl = "/uploads/" + fileName;
+
+            // Create FinancialRequest object
+            FinancialRequest request = new FinancialRequest();
+            request.setItemDescription(itemDescription);
+            request.setAmount(amount);
+            request.setType(FinancialRequest.FinancialRequestType.valueOf(type.toUpperCase()));
+            request.setProofFileUrl(Arrays.toString(fileBytes));  // Optionally, you can keep this if you still want to store the byte array
+            request.setProofFileUrl(Arrays.toString(fileUrl.getBytes()));  // Store the URL of the uploaded file
+
+            // Set employee
+            Employee employee = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employee not found"));
+            request.setEmployee(employee);
+            request.setStatus("PENDING");
+
+            // Save the request
+            FinancialRequest savedRequest = financeRequestRepository.save(request);
+
+            // Return response including the file URL
+            Map<String, Object> response = Map.of(
+                    "id", savedRequest.getId(),
+                    "itemDescription", savedRequest.getItemDescription(),
+                    "amount", savedRequest.getAmount(),
+                    "status", savedRequest.getStatus(),
+                    "createdDate", savedRequest.getCreatedDate(),
+                    "type", savedRequest.getType().name(),
+                    "proofFileUrl", savedRequest.getProofFileUrl()  // Add the URL of the saved file
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            logger.error("Failed to process the uploaded file", e);
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to process the uploaded file"));
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred", e);
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
         }
     }
 }

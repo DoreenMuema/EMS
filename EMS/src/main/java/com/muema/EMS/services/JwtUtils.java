@@ -17,12 +17,12 @@ public class JwtUtils {
     private static final String SECRET_KEY = "48A5360D50EFAE9A612284859CDD1D8F773EDFBEDF89D5B7C83F294392946455";
     private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 hour
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String email, String role) {
         long expirationTime = Duration.ofHours(1).toMillis(); // 1 hour
         Instant now = Instant.now();
 
         String jwtToken = Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plusMillis(expirationTime)))
@@ -37,17 +37,17 @@ public class JwtUtils {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
+        final String email = extractEmail(token);
         final String role = extractRole(token); // Extract role from the token
 
-        // Check if the username matches and if the role is correct
-        return (username.equals(userDetails.getUsername()) &&
+        // Check if the email matches and if the role is correct
+        return (email.equals(userDetails.getUsername()) &&
                 !isTokenExpired(token) &&
                 userDetails.getAuthorities().stream()
                         .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(role)));
     }
 
-    // Method to extract a specific claim using a Function (e.g., extract username or roles)
+    // Method to extract a specific claim using a Function (e.g., extract email or roles)
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token); // Extract all claims first
         return claimsResolver.apply(claims); // Apply the claim resolver function on the claims
@@ -79,7 +79,6 @@ public class JwtUtils {
         }
     }
 
-
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -97,8 +96,8 @@ public class JwtUtils {
         return "ROLE_ADMIN".equals(role);
     }
 
-    // New method to extract the username from the token (subject claim)
-    public String extractUsername(String token) {
+    // New method to extract the email from the token (subject claim)
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject); // Claims::getSubject extracts the "sub" (subject) claim
     }
 }
