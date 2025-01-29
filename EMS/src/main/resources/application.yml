@@ -8,6 +8,9 @@ spring:
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
   jpa:
     hibernate:
       ddl-auto: update

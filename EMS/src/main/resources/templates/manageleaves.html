@@ -37,7 +37,6 @@
             <div class="nav-right">
                 <ul>
                     <li><a href="/notifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
-
                 </ul>
             </div>
         </div>
@@ -45,27 +44,69 @@
         <!-- Main Content -->
         <div class="leave-tables-container">
             <div class="leave-requests">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Leave Applications</h3>
-                    </div>
-                    <!-- Employee Table -->
-                    <table id="leaveTable">
-                        <thead>
-                        <tr>
-                            <th>Employee Name</th>
-                            <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody id="leave-table-body">
-                        <!-- Rows will be dynamically added here -->
-                        </tbody>
-                    </table>
-                </div>
+                <!-- Table Header -->
+                <h2>Employee Leave Requests</h2>
+
+                <!-- Employee Table -->
+                <table id="leaveTable">
+                    <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="leave-table-body">
+                    <!-- Sample Employee Leave Requests -->
+                    <tr>
+                        <td>Jane Doe</td>
+                        <td>Annual Leave</td>
+                        <td>2025-02-01</td>
+                        <td>2025-02-10</td>
+                        <td>Approved</td>
+                        <td>
+                            <button class="btn-approve">Approve</button>
+                            <button class="btn-reject">Reject</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>John Smith</td>
+                        <td>Sick Leave</td>
+                        <td>2025-02-03</td>
+                        <td>2025-02-05</td>
+                        <td>Pending</td>
+                        <td>
+                            <button class="btn-approve">Approve</button>
+                            <button class="btn-reject">Reject</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Alice Johnson</td>
+                        <td>Maternity Leave</td>
+                        <td>2025-02-15</td>
+                        <td>2025-05-15</td>
+                        <td>Approved</td>
+                        <td>
+                            <button class="btn-approve">Approve</button>
+                            <button class="btn-reject">Reject</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Michael Brown</td>
+                        <td>Casual Leave</td>
+                        <td>2025-01-28</td>
+                        <td>2025-01-30</td>
+                        <td>Rejected</td>
+                        <td>
+                            <button class="btn-approve">Approve</button>
+                            <button class="btn-reject">Reject</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

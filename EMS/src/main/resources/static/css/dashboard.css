@@ -1925,3 +1925,15 @@ tr:hover {
     color: white;
     border: none;
 }
+h2 {
+    font-family: 'Poppins', sans-serif; /* Matches the rest of the dashboard */
+    font-size: 1.8rem; /* Larger and prominent */
+    font-weight: 600; /* Bold appearance */
+    color: #333; /* Dark grey for readability */
+    margin-bottom: 20px; /* Space below the header */
+    text-align: center; /* Center-align the header */
+    border-bottom: 2px solid #007BFF; /* Blue underline for emphasis */
+    padding-bottom: 10px; /* Space below the text and underline */
+    letter-spacing: 0.5px; /* Slight spacing for clean look */
+}
+
