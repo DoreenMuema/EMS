@@ -7,10 +7,20 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    List<Notification> findByEmployeeIdAndRead(Long employeeId, boolean read);
+    // Fetch unread notifications for a specific employee with a specific notification type
+    List<Notification> findByEmployeeIdAndReadAndType(Long employeeId, boolean read, Notification.NotificationType type);
+
+    // Fetch all notifications for a specific employee
     List<Notification> findByEmployeeId(Long employeeId);
 
-    List<Notification> findByRecipientRole(String roleAdmin);
+    // Fetch unread notifications for a specific role (e.g., admin) and notification type
+    List<Notification> findUnreadByRecipientRoleAndType(String recipientRole, Notification.NotificationType type);
 
-    List<Notification> findUnreadByRecipientRole(String roleAdmin);
+    // Fetch all notifications for a specific recipient role
+    List<Notification> findByRecipientRole(String role);
+
+    // Fetch unread notifications for a specific recipient role
+    List<Notification> findUnreadByRecipientRole(String recipientRole);
+
+    List<Notification> findByEmployeeIdAndRead(Long employeeId, boolean b);
 }

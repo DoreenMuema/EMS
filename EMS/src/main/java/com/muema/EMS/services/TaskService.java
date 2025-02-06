@@ -105,4 +105,15 @@ public class TaskService {
         // Save the updated task
         return taskRepository.save(task);
     }
+
+    public List<Task> findByStatus(String status) {
+        // Assuming you have a TaskRepository that extends JpaRepository or similar
+        return taskRepository.findByStatus(status);
+    }
+    public List<Task> findPendingTasksByEmployeeId(Long employeeId) {
+        // Assuming there's a method in the repository to filter tasks by employee ID and status "PENDING"
+        return taskRepository.findByEmployeeIdAndStatus(employeeId, "PENDING");
+    }
+
+
 }

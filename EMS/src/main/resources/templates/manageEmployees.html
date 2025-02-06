@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/dashboard.css">
 
     <script src="/js/dashboard/adminDashboard.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -51,7 +52,7 @@
         <!-- Employee Form Modal (Create or Update Employee) -->
         <div id="employeeModal" class="modal">
             <div class="modal-content">
-                <span id="cancelBtn" class="close">&times;</span>
+
                 <h2 id="modalTitle">Create New Employee</h2>
                 <form id="employeeForm">
                     <label for="firstName">First Name:</label>
@@ -83,13 +84,22 @@
                     </div><br>
 
                     <label for="role">Role:</label>
-                    <input type="text" id="role" name="role" required>
+                    <select id="role" name="role" required>
+                        <option value="EMPLOYEE">EMPLOYEE</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
 
                     <label for="employmentDate">Employment Date:</label>
-                    <input type="text" id="employmentDate" name="employmentDate" placeholder="e.g., 01-Aug-2013">
+                    <input type="date" id="employmentDate" name="employmentDate" required>
 
                     <label for="employmentType">Employment Type:</label>
-                    <input type="text" id="employmentType" name="employmentType" placeholder="e.g., Full time">
+                    <select id="employmentType" name="employmentType">
+                        <option value="fullTime">Full Time</option>
+                        <option value="partTime">Part Time</option>
+                        <option value="contract">Contract</option>
+                        <option value="attaché">Attaché</option>
+                        <option value="internship">Internship</option>
+                    </select>
 
                     <label for="dob">Date of Birth:</label>
                     <input type="date" id="dob" name="dob">
@@ -102,10 +112,23 @@
                     </select>
 
                     <label for="department">Department:</label>
-                    <input type="text" id="department" name="department" required>
+                    <select id="department" name="department" required>
+                        <option value="hr">Human Resources</option>
+                        <option value="accounts">Accounts</option>
+                        <option value="it">IT</option>
+                        <option value="finance">Finance</option>
+
+                    </select>
 
                     <label for="designation">Designation:</label>
-                    <input type="text" id="designation" name="designation" required>
+                    <select id="designation" name="designation" required>
+                        <option value="human_resources">Human Resources</option>
+                        <option value="accounts">Accounts</option>
+                        <option value="admin">Admin</option>
+                        <option value="project_manager">Project Manager</option>
+                        <option value="quality_assurance_tester">Quality Assurance Tester</option>
+                        <option value="developer">Developer</option>
+                    </select>
 
                     <button type="submit" id="submitBtn">Create Employee</button>
                     <button type="button" id="closeModalBtn" class="cancel-button">Cancel</button>

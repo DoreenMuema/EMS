@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -57,6 +58,7 @@ public class NotificationService {
         // Logic to fetch unread notifications for admins
         return notificationRepository.findUnreadByRecipientRole("ROLE_ADMIN");
     }
+
 
 
 
@@ -129,5 +131,29 @@ public class NotificationService {
     }
 
     public void sendNotification(Notification notification) {
+    }
+
+    // Get unread finance-related notifications for a specific employee
+    public List<Notification> getUnreadNotificationsForFinanceRequests(Long employeeId) {
+        // Assuming 'FINANCE_REQUEST' is added to the NotificationType enum
+        return notificationRepository.findByEmployeeIdAndReadAndType(employeeId, false, Notification.NotificationType.FINANCE_REQUEST);
+    }
+
+    // Get unread leave-related notifications for a specific employee
+    public List<Notification> getUnreadNotificationsForLeaveRequests(Long employeeId) {
+        // Fetch unread leave-related notifications for the given employee
+        return notificationRepository.findByEmployeeIdAndReadAndType(employeeId, false, Notification.NotificationType.LEAVE_REQUEST);
+    }
+
+    // Get unread finance-related notifications for the admin
+    public List<Notification> getUnreadNotificationsForFinanceRequestsForAdmin() {
+        // Fetch unread finance-related notifications for the admin
+        return notificationRepository.findUnreadByRecipientRoleAndType("admin", Notification.NotificationType.FINANCE_REQUEST);
+    }
+
+    // Get unread leave-related notifications for the admin
+    public List<Notification> getUnreadNotificationsForLeaveRequestsForAdmin() {
+        // Fetch unread leave-related notifications for the admin
+        return notificationRepository.findUnreadByRecipientRoleAndType("admin", Notification.NotificationType.LEAVE_REQUEST);
     }
 }

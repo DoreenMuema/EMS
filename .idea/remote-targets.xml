@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="binary@192.168.100.39:22" type="ssh/sftp" uuid="38188900-3a46-49f9-9514-80f5c70943d8">
+        <config>
+          <option name="projectRootOnTarget" value="/home/binary/EMS" />
+          <option name="serverName" value="binary@192.168.100.39:22 password" />
+        </config>
+        <ContributedStateBase type="JavaLanguageRuntime">
+          <config>
+            <option name="javaVersionString" value="21.0.5" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>

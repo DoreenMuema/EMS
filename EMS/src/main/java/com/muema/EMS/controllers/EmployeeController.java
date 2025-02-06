@@ -10,6 +10,7 @@ import io.jsonwebtoken.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -27,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -144,8 +146,6 @@ public class EmployeeController {
             response.put("surname", employee.getSurname() != null ? employee.getSurname() : "N/A");
             response.put("otherName", employee.getOtherName() != null ? employee.getOtherName() : "N/A");
             response.put("phone", employee.getPhone() != null ? employee.getPhone() : "N/A");
-            response.put("lastLogin", employee.getLastLogin() != null ? employee.getLastLogin().toString() : "Not Available");
-            response.put("passwordExpiry", employee.getPasswordExpiry() != null ? employee.getPasswordExpiry().toString() : "Not Available");
             response.put("idNumber", employee.getIdNumber() != null ? employee.getIdNumber() : "N/A");  // Ensure idNumber is included
             response.put("employmentDate", employee.getEmploymentDate() != null ? employee.getEmploymentDate().toString() : "N/A");
             response.put("employmentType", employee.getEmploymentType() != null ? employee.getEmploymentType() : "N/A");
@@ -224,6 +224,7 @@ public class EmployeeController {
                 employee.setIdNumber(newIdNumber); // Update idNumber if provided
             }
 
+
             // Save updated employee
             employeeService.save(employee);
 
@@ -235,7 +236,9 @@ public class EmployeeController {
             response.put("phone", employee.getPhone());
             response.put("dob", employee.getDob());
             response.put("gender", employee.getGender());
+            response.put("imageUrl", employee.getImageUrl() != null ? employee.getImageUrl() : "N/A");
             response.put("department", employee.getDepartment());
+
             response.put("age", employee.getAge());  // Include age in the response
             response.put("address", employee.getAddress()); // Include address in the response
             response.put("idNumber", employee.getIdNumber()); // Include idNumber in the response
@@ -462,6 +465,20 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+    // Get pending tasks for a specific employee (available to admin and the employee themselves)
+    @GetMapping("/tasks/pending/{employeeId}")
+    @Secured({"ROLE_EMPLOYEE", "ROLE_ADMIN"})
+    public ResponseEntity<List<Task>> getPendingEmployeeTasks(@PathVariable Long employeeId) {
+        try {
+            // Correct the service call to get tasks with "PENDING" status for a given employee
+            List<Task> tasks = taskService.findPendingTasksByEmployeeId(employeeId);  // Adjusted method name
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
 
     // Request an extension for a task
     @PostMapping("/request-extension/{taskId}")
@@ -496,6 +513,12 @@ public class EmployeeController {
                 requestMap.put("status", request.getStatus());
                 requestMap.put("createdDate", request.getCreatedDate());
                 requestMap.put("type", request.getType().name());
+                requestMap.put("description", request.getDescription());
+
+                // Add claimDate and requisitionDate with "N/A" as fallback
+                requestMap.put("claimDate", request.getClaimDate() != null ? request.getClaimDate().toString() : "N/A");
+                requestMap.put("requisitionDate", request.getRequisitionDate() != null ? request.getRequisitionDate().toString() : "N/A");
+
                 requestMap.put("proofFileUrl", request.getProofFileUrl() != null ? new String(request.getProofFileUrl()) : null);
                 return requestMap;
             }).collect(Collectors.toList());
@@ -514,54 +537,55 @@ public class EmployeeController {
             @RequestParam("itemDescription") String itemDescription,
             @RequestParam("amount") Double amount,
             @RequestParam("type") String type,
-            @RequestParam("proofFile") MultipartFile proofFile,
+            @RequestParam(value = "proofFile", required = false) MultipartFile proofFile, // For CLAIMS
+            @RequestParam(value = "description", required = false) String description, // For REQUISITION
+            @RequestParam(value = "claimDate", required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") LocalDate claimDate, // For CLAIM
+            @RequestParam(value = "requisitionDate", required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") LocalDate requisitionDate, // For REQUISITION
             @PathVariable Long employeeId) {
+
         try {
-            // Log input values
-            logger.debug("Received request: itemDescription={}, amount={}, type={}, employeeId={}", itemDescription, amount, type, employeeId);
-
-            // Validate file content type
-            String contentType = proofFile.getContentType();
-            if (!contentType.equals("application/pdf") && !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Only PDFs and images are allowed"));
-            }
-
-            // Convert file to byte array (this may still be needed depending on your requirements)
-            byte[] fileBytes = proofFile.getBytes();
-
-            // Define the directory to save the proof file (e.g., in the "uploads" folder)
-            String uploadsDir = "C:/path/to/upload/directory/";  // Replace with actual path
-            Path uploadPath = Paths.get(uploadsDir);
-
-            // Check if the directory exists; if not, create it
-            if (!Files.exists(uploadPath)) {
-                try {
-                    Files.createDirectories(uploadPath);
-                } catch (IOException e) {
-                    logger.error("Failed to create upload directory", e);
-                    return ResponseEntity.status(500).body(Map.of("error", "Failed to create upload directory"));
-                }
-            }
-
-            // Generate the filename and save the file
-            String fileName = System.currentTimeMillis() + "-" + proofFile.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
-
-            // Save the file to the server
-            Files.write(filePath, fileBytes);
-
-            // Construct the URL for accessing the file (adjust this URL according to your server setup)
-            String fileUrl = "/uploads/" + fileName;
+            logger.debug("Received request: itemDescription={}, amount={}, type={}, employeeId={}, claimDate={}, requisitionDate={}",
+                    itemDescription, amount, type, employeeId, claimDate, requisitionDate);
 
             // Create FinancialRequest object
             FinancialRequest request = new FinancialRequest();
             request.setItemDescription(itemDescription);
             request.setAmount(amount);
             request.setType(FinancialRequest.FinancialRequestType.valueOf(type.toUpperCase()));
-            request.setProofFileUrl(Arrays.toString(fileBytes));  // Optionally, you can keep this if you still want to store the byte array
-            request.setProofFileUrl(Arrays.toString(fileUrl.getBytes()));  // Store the URL of the uploaded file
 
-            // Set employee
+            request.setClaimDate(claimDate); // Ensure claimDate is set
+            request.setRequisitionDate(requisitionDate); // Ensure requisitionDate is set
+
+            // Handle CLAIM Requests
+            if ("CLAIM".equalsIgnoreCase(type)) {
+                if (proofFile == null) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Proof file is required for claims"));
+                }
+
+                // Validate file type
+                String contentType = proofFile.getContentType();
+                if (!contentType.equals("application/pdf") && !contentType.startsWith("image/")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Only PDFs and images are allowed for proof file"));
+                }
+
+                // Save proof file
+                String fileUrl = saveProofFile(proofFile, String.valueOf(employeeId));
+                if (fileUrl == null) {
+                    return ResponseEntity.status(500).body(Map.of("error", "Failed to upload proof file"));
+                }
+
+                request.setProofFileUrl(fileUrl);
+            }
+
+            // Handle REQUISITION Requests
+            if ("REQUISITION".equalsIgnoreCase(type)) {
+                if (description == null || description.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Description is required for requisition requests"));
+                }
+                request.setDescription(description);
+            }
+
+            // Fetch employee
             Employee employee = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new RuntimeException("Employee not found"));
             request.setEmployee(employee);
@@ -570,24 +594,81 @@ public class EmployeeController {
             // Save the request
             FinancialRequest savedRequest = financeRequestRepository.save(request);
 
-            // Return response including the file URL
-            Map<String, Object> response = Map.of(
-                    "id", savedRequest.getId(),
-                    "itemDescription", savedRequest.getItemDescription(),
-                    "amount", savedRequest.getAmount(),
-                    "status", savedRequest.getStatus(),
-                    "createdDate", savedRequest.getCreatedDate(),
-                    "type", savedRequest.getType().name(),
-                    "proofFileUrl", savedRequest.getProofFileUrl()  // Add the URL of the saved file
-            );
+            // Prepare response
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", savedRequest.getId());
+            response.put("itemDescription", savedRequest.getItemDescription());
+            response.put("amount", savedRequest.getAmount());
+            response.put("status", savedRequest.getStatus());
+            response.put("createdDate", savedRequest.getCreatedDate());
+
+            // Debugging: Print claimDate and requisitionDate
+            logger.debug("Saved claimDate: {}", savedRequest.getClaimDate());
+            logger.debug("Saved requisitionDate: {}", savedRequest.getRequisitionDate());
+
+            response.put("claimDate", savedRequest.getClaimDate() != null ? savedRequest.getClaimDate().toString() : "N/A");
+            response.put("requisitionDate", savedRequest.getRequisitionDate() != null ? savedRequest.getRequisitionDate().toString() : "N/A");
+            response.put("type", savedRequest.getType().name());
+
+
+            if (savedRequest.getProofFileUrl() != null) {
+                response.put("proofFileUrl", savedRequest.getProofFileUrl());
+            }
+            if (savedRequest.getDescription() != null) {
+                response.put("description", savedRequest.getDescription());
+            }
 
             return ResponseEntity.ok(response);
+
         } catch (IOException e) {
-            logger.error("Failed to process the uploaded file", e);
+            logger.error("File processing error", e);
             return ResponseEntity.status(500).body(Map.of("error", "Failed to process the uploaded file"));
         } catch (Exception e) {
-            logger.error("An unexpected error occurred", e);
+            logger.error("Unexpected error occurred", e);
             return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+
+
+    /**
+     * Saves the uploaded proof file and returns its URL.
+     */
+    private String saveProofFile(MultipartFile proofFile, String employeeId) {
+        try {
+            // Define the upload directory
+            String uploadsDir = "C:/Users/doree/Desktop/EMS/uploads";
+            Path uploadPath = Paths.get(uploadsDir);
+
+            // Create the directory if it doesn't exist
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                logger.info("Created upload directory at: {}", uploadPath);
+            }
+
+            // Construct the filename using employeeId and original filename
+            String originalFileName = proofFile.getOriginalFilename();
+            if (originalFileName == null || originalFileName.isEmpty()) {
+                logger.warn("Received empty filename for employee: {}", employeeId);
+                return null;
+            }
+
+            // Normalize filename to prevent invalid characters
+            String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9.\\-_]", "_"); // Replace special chars with _
+            String fileName = employeeId + "-" + sanitizedFileName;
+
+            // Save file to disk
+            Path filePath = uploadPath.resolve(fileName);
+            Files.write(filePath, proofFile.getBytes());
+            logger.info("File saved successfully at: {}", filePath.toAbsolutePath());
+
+            // Return only the filename (store this in the database)
+            return fileName;
+
+        } catch (IOException e) {
+            logger.error("Error saving proof file for employee: {}", employeeId, e);
+            return null;
+        } catch (java.io.IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

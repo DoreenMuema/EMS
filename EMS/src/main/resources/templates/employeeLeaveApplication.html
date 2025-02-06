@@ -24,13 +24,11 @@
             <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
-        <div class="logout">
-            <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
+
     </nav>
-    <<!-- Main Content -->
+    <!-- Main Content -->
     <div class="main">
         <div class="top-navbar">
             <div class="nav-left">
@@ -97,7 +95,7 @@
 <!-- Leave Request Modal -->
 <div id="leaveModal" class="modal" style="display: none;">
     <div class="modal-content">
-        <span class="close">&times;</span>
+
         <h3>Apply for Leave</h3>
         <form id="leaveForm">
             <label for="leaveType">Leave Type:</label>
@@ -121,7 +119,9 @@
             <textarea id="description" name="description" rows="4" placeholder="Optional details..."></textarea>
 
             <button type="submit">Submit Leave Application</button>
-            <button type="cancel">Cancel</button>
+            <button type="button" id="cancelLeaveBtn" style="background-color: #dc3545; color: white; padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 4px; cursor: pointer; text-align: center;">Cancel</button>
+
+
         </form>
     </div>
 </div>

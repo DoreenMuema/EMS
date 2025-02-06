@@ -23,4 +23,5 @@ public interface LeaveRepository extends JpaRepository<LeaveApplication, Long> {
     @Query("UPDATE LeaveBalances lb SET lb.availableBalance = :availableBalance WHERE lb.employee.id = :employeeId AND lb.leaveType = :leaveType")
     void updateLeaveBalance(@Param("employeeId") Long employeeId, @Param("leaveType") String leaveType, @Param("availableBalance") Integer availableBalance);
 
+    List<LeaveApplication> findByStatus(String status);
 }

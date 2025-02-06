@@ -23,7 +23,7 @@
             <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
 
@@ -51,9 +51,7 @@
                     <p><strong>Email:</strong> <span id="email"></span></p>
                     <p><strong>Role:</strong> <span id="role"></span></p>
                     <p><strong>Designation:</strong> <span id="designation"></span></p>
-                    <p><strong>Last Login:</strong> <span id="lastLogin"></span></p>
-                    <p><strong>Password Expiry:</strong> <span id="passwordExpiry"></span></p>
-                    <p><strong>ID Number:</strong> <span id="idNumber"></span></p>
+                    <p><strong>ID Number:</strong> <span id="idNumberDisplay"></span></p>
                     <p><strong>Phone Number:</strong> <span id="phoneNumber"></span></p>
                     <p><strong>Address:</strong> <span id="addressProfile"></span></p>
                     <p><strong>Age:</strong> <span id="age"></span></p>
@@ -67,7 +65,8 @@
                 <div class="profile-image-container">
                     <h3>Profile Image</h3>
                     <div class="image-wrapper">
-                        <img id="profileImage" src="https://via.placeholder.com/150" alt="Profile Image">
+                        <img id="profileImage" src="" alt="Profile Image">
+
                         <div class="remove-image" id="removeImage" style="display: none;">&times;</div> <!-- Cancel icon as '×' -->
                     </div>
                     <div class="upload-container">
@@ -86,14 +85,12 @@
         <!-- Modal for Creating or Updating Employee -->
         <div id="employeeModal" style="display: none;">
             <div class="modal-content">
-                <span id="cancelBtn" class="close">&times;</span>
+
                 <h2 id="modalTitle">Update Employee Profile</h2>
                 <form id="editProfileForm">
 
-                    <!-- ID Number Field -->
                     <label for="idNumber">ID Number:</label>
                     <input type="text" id="idNumber" name="idNumber" required><br>
-
                     <!-- First Name Field -->
                     <label for="firstName">First Name:</label>
                     <input type="text" id="firstName" name="firstName" required><br>
@@ -134,13 +131,7 @@
                     <label for="departmentModal">Department:</label>
                     <input type="text" id="departmentModal" name="department" placeholder="e.g., Software department"><br>
 
-                    <!-- Employment Type Field -->
-                    <label for="employmentTypeModal">Employment Type:</label>
-                    <input type="text" id="employmentTypeModal" name="employmentType" required><br>
 
-                    <!-- Employment Date Field -->
-                    <label for="employmentDateModal">Employment Date:</label>
-                    <input type="date" id="employmentDateModal" name="employmentDate" required><br>
 
                     <!-- Password Field -->
                     <label for="password">Password:</label>

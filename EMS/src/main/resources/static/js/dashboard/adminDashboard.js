@@ -21,28 +21,30 @@ if (viewLeaveBtn) {
 } else {
     console.error("Request Leave button not found.");
 }
-// tasks button action
+// Tasks button action
 const tasksBtn = document.getElementById("tasksBtn");
 if (tasksBtn) {
-    console.log("Finance button found");
+    console.log("Tasks button found");
     tasksBtn.addEventListener("click", () => {
-        console.log("Finance button clicked");
+        console.log("Tasks button clicked");
         window.location.href = "/manageTasks";
     });
 } else {
-    console.error("Finance button not found.");
+    console.error("Tasks button not found.");
 }
-// tasks button action
+
+// Finance button action
 const adminFinanceBtn = document.getElementById("adminFinanceBtn");
 if (adminFinanceBtn) {
     console.log("Finance button found");
-    tasksBtn.addEventListener("click", () => {
+    adminFinanceBtn.addEventListener("click", () => {  // Corrected this line
         console.log("Finance button clicked");
         window.location.href = "/financeRequest";
     });
 } else {
     console.error("Finance button not found.");
 }
+
 // Establish the WebSocket connection for the admin
 const adminSocket = new WebSocket('ws://localhost:8080/ws/admin');
 
@@ -114,7 +116,7 @@ function updateLeaveRequests(leaveRequests) {
     }
 
     // Update the list of leave requests
-    const leaveRequestsList = document.getElementById('leaveRequestsList');
+    const leaveRequestsList = document.getElementById('leave-table-body');
     if (leaveRequestsList) {
         if (leaveRequests.length > 0) {
             leaveRequestsList.innerHTML = leaveRequests.map(request => `
@@ -187,41 +189,69 @@ function fetchEmployeeData() {
         .catch(error => console.error('Error fetching employee data:', error));
 }
 
-// Ensure the "Create Employee" button is correctly targeted
 document.addEventListener("DOMContentLoaded", () => {
-    const createEmployeeBtn = document.getElementById('createEmployeeBtn');
-    const employeeModal = document.getElementById('employeeModal');
-    const employeeForm = document.getElementById('employeeForm');
-    const modalTitle = document.getElementById('modalTitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+    // Get modal elements
+    const employeeModal = document.getElementById("employeeModal");
+    const createEmployeeBtn = document.getElementById("createEmployeeBtn");
+    const employeeForm = document.getElementById("employeeForm");
+    const modalTitle = document.getElementById("modalTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("closeModalBtn");
 
+    // Ensure elements exist before adding event listeners
     if (createEmployeeBtn && employeeModal && employeeForm && modalTitle && submitBtn && cancelBtn) {
         // Show the modal when the "Create Employee" button is clicked
-        createEmployeeBtn.addEventListener('click', () => {
+        createEmployeeBtn.addEventListener("click", () => {
             resetEmployeeForm(); // Clear the form fields
             modalTitle.textContent = "Create New Employee"; // Set title
             submitBtn.textContent = "Create Employee"; // Set button text
-            submitBtn.removeAttribute('data-employee-id'); // Clear any attached employee ID
-            employeeModal.style.display = 'block'; // Show modal
+            submitBtn.removeAttribute("data-employee-id"); // Clear any attached employee ID
+            employeeModal.style.display = "block"; // Show modal
         });
 
         // Hide the modal when the "Cancel" button is clicked
-        cancelBtn.addEventListener('click', () => {
-            employeeModal.style.display = 'none'; // Hide modal
+        cancelBtn.addEventListener("click", () => {
+            employeeModal.style.display = "none"; // Hide modal
         });
 
         // Handle form submission (create or update)
-        employeeForm.addEventListener('submit', handleEmployeeFormSubmit);
+        employeeForm.addEventListener("submit", handleEmployeeFormSubmit);
     } else {
         console.error("Error: Required modal elements not found in the DOM.");
     }
+
+    // Attach event listener for password toggle
+    document.querySelector(".password-toggle-icon").addEventListener("click", togglePassword);
+
+    // Function to toggle password visibility
+    function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const eyeIcon = document.getElementById("eye-icon");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            eyeIcon.classList.remove("fa-eye");
+            eyeIcon.classList.add("fa-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            eyeIcon.classList.remove("fa-eye-slash");
+            eyeIcon.classList.add("fa-eye");
+        }
+    }
+
+    // Function to reset form fields
+    function resetEmployeeForm() {
+        employeeForm.reset();
+    }
 });
 
-// Reset the form fields
-function resetEmployeeForm() {
-    document.getElementById('employeeForm').reset();
-}
+
+// Set max date for employmentDate to today
+document.addEventListener('DOMContentLoaded', function () {
+    const employmentDateInput = document.getElementById('employmentDate');
+    const today = new Date().toISOString().split('T')[0];  // Get today's date in yyyy-mm-dd format
+    employmentDateInput.setAttribute('max', today);
+});
 
 // Handle the form submission
 function handleEmployeeFormSubmit(event) {
@@ -384,57 +414,65 @@ function updateEmployee(id) {
 }
 
 
-// Deactivate an employee
+// Deactivate an employee with confirmation
 function deactivateEmployee(id) {
-    fetch(`/api/admin/deactivate/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json',
-        }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to deactivate employee. Status: ${response.status}`);
+    if (confirm("Are you sure you want to deactivate this employee?")) {
+        fetch(`/api/admin/deactivate/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json',
             }
-            return response.json();
         })
-        .then(data => {
-            console.log('Employee deactivated:', data);
-            alert(`Employee ${data.firstName} ${data.lastName} has been deactivated successfully.`);
-            fetchEmployeeData(); // Refresh the employee list
-        })
-        .catch(error => {
-            console.error('Error deactivating employee:', error);
-            alert('Error: Unable to deactivate employee.');
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to deactivate employee. Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Employee deactivated:', data);
+                alert(`Employee ${data.firstName} ${data.lastName} has been deactivated successfully.`);
+                fetchEmployeeData(); // Refresh the employee list
+            })
+            .catch(error => {
+                console.error('Error deactivating employee:', error);
+                alert('Error: Unable to deactivate employee.');
+            });
+    } else {
+        console.log("Employee deactivation cancelled.");
+    }
 }
 
-// Delete an employee
+// Delete an employee with confirmation
 function deleteEmployee(id) {
-    fetch(`/api/admin/delete/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json',
-        }
-    })
-        .then(response => {
-            if (response.ok) {
-                console.log(`Employee with ID ${id} deleted successfully`);
-                fetchEmployeeData(); // Refresh the employee list
-            } else if (response.status === 404) {
-                console.error(`Employee with ID ${id} not found`);
-                alert("Employee not found.");
-            } else {
-                console.error(`Error deleting employee with ID ${id}`);
-                alert("Failed to delete the employee. Please try again.");
+    if (confirm("Are you sure you want to delete this employee? This action cannot be undone.")) {
+        fetch(`/api/admin/delete/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json',
             }
         })
-        .catch(error => {
-            console.error(`Error deleting employee with ID ${id}:`, error);
-            alert("An error occurred while trying to delete the employee.");
-        });
+            .then(response => {
+                if (response.ok) {
+                    console.log(`Employee with ID ${id} deleted successfully`);
+                    fetchEmployeeData(); // Refresh the employee list
+                } else if (response.status === 404) {
+                    console.error(`Employee with ID ${id} not found`);
+                    alert("Employee not found.");
+                } else {
+                    console.error(`Error deleting employee with ID ${id}`);
+                    alert("Failed to delete the employee. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error(`Error deleting employee with ID ${id}:`, error);
+                alert("An error occurred while trying to delete the employee.");
+            });
+    } else {
+        console.log("Employee deletion cancelled.");
+    }
 }
 
 // Function to fetch leaves and populate the table
@@ -451,33 +489,51 @@ function fetchLeaveApplications() {
         .then(leaves => {
             console.log('Fetched Leave Applications:', leaves); // Log the fetched data
 
-            const tbody = document.querySelector('#leaveTable tbody');
+            const tbody = document.querySelector('#leave-table-body');
+
+            if (!tbody) {
+                console.error('tbody not found!');
+                return;
+            }
+
+            // Debugging the tbody content before populating
+            console.log('Current tbody content:', tbody.innerHTML);
+
             tbody.innerHTML = ''; // Clear existing rows
 
+            // Check if leaves array is empty
+            if (leaves.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No leave requests available</td></tr>';
+                return;
+            }
+
+            // Loop through each leave and create a row for it
             leaves.forEach(leave => {
                 const row = document.createElement('tr');
 
-                // Populate table columns
+                // Populate table columns (ensure property names match the fetched data)
                 row.innerHTML = `
-         
-                 <td>${leave.employeeFirstName} ${leave.employeeSurname}</td>
+                <td>${leave.employeeFirstName} ${leave.employeeSurname}</td>
                 <td>${leave.leaveType}</td>
                 <td>${leave.startDate}</td>
                 <td>${leave.endDate}</td>
-             
                 <td>${leave.status}</td>
-               <td>
-    <select class="action-dropdown" data-leave-id="${leave.id}">
-        <option value="">Select Action</option>
-        <option value="approve" class="button-option approve">Approve</option>
-        <option value="reject" class="button-option reject">Reject</option>
-        <option value="recall" class="button-option recall">Recall</option>
-    </select>
-</td>
+                <td>
+                    <select class="action-dropdown" data-leave-id="${leave.id}">
+                        <option value="">Select Action</option>
+                        <option value="approve" class="button-option approve">Approve</option>
+                        <option value="reject" class="button-option reject">Reject</option>
+                        <option value="recall" class="button-option recall">Recall</option>
+                    </select>
+                </td>
             `;
 
+                // Set the default selected value for the action dropdown to empty
+                const actionDropdown = row.querySelector('.action-dropdown');
+                actionDropdown.value = ""; // Ensure "Select Action" is selected by default
+
                 // Add event listener for action dropdown
-                row.querySelector('.action-dropdown').addEventListener('change', (event) => {
+                actionDropdown.addEventListener('change', (event) => {
                     const action = event.target.value;
                     const leaveId = event.target.getAttribute('data-leave-id');
                     handleAction(action, leaveId);
@@ -485,9 +541,17 @@ function fetchLeaveApplications() {
 
                 tbody.appendChild(row);
             });
+
+            // Debugging after rows are added
+            console.log('Updated tbody content:', tbody.innerHTML);
         })
         .catch(error => console.error('Error fetching leave applications:', error));
 }
+
+// Call fetchLeaveApplications when the page is loaded
+window.onload = function() {
+    fetchLeaveApplications(); // Fetch the leave applications when the page is loaded
+};
 
 // Function to handle action (approve, reject, recall)
 function handleAction(action, leaveId) {
@@ -574,6 +638,307 @@ document.querySelectorAll('.action-dropdown').forEach(dropdown => {
         }
     });
 });
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("Fetching finance requests...");
+    fetchFinanceRequests();
+});
+
+function fetchFinanceRequests() {
+    fetch('/leaves/status/PENDING', {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer YOUR_JWT_TOKEN' // Replace with actual token
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log("API Response:", data); // Debugging step
+            const activitiesContainer = document.querySelector('.activities');
+
+            // Ensure container exists
+            if (!activitiesContainer) {
+                console.error("Error: .activities container not found!");
+                return;
+            }
+
+            activitiesContainer.innerHTML = ""; // Clear previous items
+
+            if (data.length === 0) {
+                activitiesContainer.innerHTML = "<p>No pending finance requests.</p>";
+                return;
+            }
+
+            data.forEach(request => {
+                const activityDiv = document.createElement('div');
+                activityDiv.classList.add('activity');
+
+                const icon = document.createElement('i');
+                icon.classList.add('fas', 'fa-file-alt');
+
+                const text = document.createElement('p');
+                text.textContent = `Leave Request from ${request.employeeFirstName} ${request.employeeSurname} (${request.leaveType}): ${request.status}`;
+
+                const button = document.createElement('button');
+                button.textContent = "Review";
+                button.addEventListener('click', () => {
+                    alert(`Reviewing request from ${request.employeeFirstName}`);
+                });
+
+                activityDiv.appendChild(icon);
+                activityDiv.appendChild(text);
+                activityDiv.appendChild(button);
+                activitiesContainer.appendChild(activityDiv);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching finance requests:', error);
+        });
+}
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const financeTab = document.getElementById("financeTab");
+    const financeRequestsList = document.getElementById("financeRequestsList");
+
+    // Replace with actual token you get after login
+    const token = getAuthToken(); // Get the auth token
+
+    // Handle click event for the Finance tab
+    financeTab.addEventListener("click", function() {
+        fetchFinanceRequests("PENDING");
+    });
+
+    // Fetch finance requests based on the status
+    function fetchFinanceRequests(status) {
+
+        // Clear any previous content
+        financeRequestsList.innerHTML = "Loading...";
+
+        // Make API request to get the finance requests with the 'PENDING' status
+        fetch(`/api/admin/finance-requests/status/${status}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Clear the previous content
+                financeRequestsList.innerHTML = "";
+
+                if (data && data.length > 0) {
+                    data.forEach(request => {
+                        const li = document.createElement("li");
+                        li.textContent = `Request ID: ${request.id}, Amount: ${request.amount}`;
+                        financeRequestsList.appendChild(li);
+                    });
+                } else {
+                    financeRequestsList.innerHTML = "No pending requests.";
+                }
+            })
+            .catch(error => {
+                financeRequestsList.innerHTML = "Error fetching data.";
+                console.error("Error fetching finance requests:", error);
+            });
+    }
+});
+document.addEventListener("DOMContentLoaded", function () {
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".activity-content");
+    const tasksContainer = document.getElementById("tasks-container");
+    const financeRequestsContainer = document.getElementById("finance-requests-container");
+    const leavesRequestsContainer = document.getElementById("leaves-requests-container");
+    const token = getAuthToken();
+
+    // Default tab is set to 'tasks' (but this can be changed)
+    const defaultTab = 'tasks';
+    const activeTab = document.querySelector(`.tab[data-tab="${defaultTab}"]`);
+    const activeContent = document.getElementById(defaultTab);
+
+    // Function to fetch tasks by status
+    function fetchTasks(status) {
+        fetch(`/api/admin/tasks/status/${status}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(tasks => {
+                tasksContainer.innerHTML = '';  // Clear previous content
+                if (tasks.length > 0) {
+                    tasks.forEach(task => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.classList.add('activity');
+                        taskDiv.innerHTML = `
+                            <i class="fas fa-tasks"></i>
+                            <p>${task.title}</p>
+                            <p>Assigned to: ${task.employee.firstName} ${task.employee.surname}</p>
+                            <p>Due Date: ${task.dueDate}</p>
+                            <p>Status: ${task.status}</p>
+                            <button class="view-details-btn">View Details</button>
+                        `;
+                        tasksContainer.appendChild(taskDiv);
+
+                        // Add an event listener for the "View Details" button
+                        const viewDetailsButton = taskDiv.querySelector('.view-details-btn');
+                        viewDetailsButton.addEventListener('click', function () {
+                            window.location.href = '/manageTasks';  // Redirect to the manage tasks page
+                        });
+                    });
+                } else {
+                    tasksContainer.innerHTML = '<p>No tasks found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching tasks:', error);
+                tasksContainer.innerHTML = '<p>Error fetching data. Please try again later.</p>';
+            });
+    }
+
+    // Function to fetch financial requests
+    function fetchFinancialRequests(status) {
+        fetch(`/api/admin/finance-requests/status/${status}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(requests => {
+                financeRequestsContainer.innerHTML = '';  // Clear previous content
+                if (requests.length > 0) {
+                    requests.forEach(request => {
+                        const requestDiv = document.createElement('div');
+                        requestDiv.classList.add('activity');
+                        requestDiv.innerHTML = `
+                            <i class="fas fa-money-check"></i>
+                            <p>Request by: ${request.employee.firstName} ${request.employee.surname}</p>
+                            <p>Amount: ${request.amount}</p>
+                            <p>Status: ${request.status}</p>
+                            <button class="view-details-btn">View Details</button>
+                        `;
+                        financeRequestsContainer.appendChild(requestDiv);
+
+                        // Add an event listener for the "View Details" button
+                        const viewDetailsButton = requestDiv.querySelector('.view-details-btn');
+                        viewDetailsButton.addEventListener('click', function () {
+                            window.location.href = '/manageFinanceRequests';  // Redirect to the manage finance requests page
+                        });
+                    });
+                } else {
+                    financeRequestsContainer.innerHTML = '<p>No financial requests found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching financial requests:', error);
+                financeRequestsContainer.innerHTML = '<p>Error fetching data. Please try again later.</p>';
+            });
+    }
+
+    // Function to fetch leave requests
+    function fetchLeaveRequests(status) {
+        fetch(`/api/admin/leaves/status/${status}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(requests => {
+                leavesRequestsContainer.innerHTML = '';  // Clear previous content
+                if (requests.length > 0) {
+                    requests.forEach(request => {
+                        const requestDiv = document.createElement('div');
+                        requestDiv.classList.add('activity');
+                        requestDiv.innerHTML = `
+                            <i class="fas fa-suitcase"></i>
+                            <p>Request by: ${request.employeeFirstName} ${request.employeeSurname}</p>
+                            <p>Leave Type: ${request.leaveType}</p>
+                            <p>Status: ${request.status}</p>
+                            <button class="view-details-btn">View Details</button>
+                        `;
+                        leavesRequestsContainer.appendChild(requestDiv);
+
+                        // Add an event listener for the "View Details" button
+                        const viewDetailsButton = requestDiv.querySelector('.view-details-btn');
+                        viewDetailsButton.addEventListener('click', function () {
+                            window.location.href = '/manageLeaveRequests';  // Redirect to the manage leave requests page
+                        });
+                    });
+                } else {
+                    leavesRequestsContainer.innerHTML = '<p>No leave requests found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching leave requests:', error);
+                leavesRequestsContainer.innerHTML = '<p>Error fetching data. Please try again later.</p>';
+            });
+    }
+
+    // Ensure that the active tab and content exist before applying styles
+    if (activeTab && activeContent) {
+        activeTab.classList.add("active");
+        activeContent.style.display = "block";
+    }
+
+    // Event listener for switching tabs
+    tabs.forEach(tab => {
+        tab.addEventListener("click", function () {
+            // Remove 'active' class from all tabs and hide all contents
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(content => content.style.display = "none");
+
+            // Add 'active' class to clicked tab and show corresponding content
+            this.classList.add("active");
+            const selectedTab = this.getAttribute("data-tab");
+
+            const selectedContent = document.getElementById(selectedTab);
+            if (selectedContent) {
+                selectedContent.style.display = "block";  // Only apply if the element exists
+            } else {
+                console.error(`Element with id '${selectedTab}' not found.`);
+            }
+
+            // Fetch tasks when the Tasks tab is clicked
+            if (selectedTab === "tasks") {
+                fetchTasks('PENDING');  // Fetch tasks with a status of 'PENDING'
+            }
+
+            // Fetch financial requests when the Finance tab is clicked
+            if (selectedTab === "finance") {
+                fetchFinancialRequests('PENDING');
+            }
+
+            // Fetch leave requests when the Leave tab is clicked
+            if (selectedTab === "leaves") {
+                fetchLeaveRequests('PENDING');
+            }
+        });
+    });
+
+    // Event listener for clicking on the Finance section in recent activities
+    document.getElementById("finance").addEventListener("click", function () {
+        fetchFinancialRequests('PENDING');
+    });
+
+    // Event listener for clicking on the Leave section in recent activities
+    document.getElementById("leaves").addEventListener("click", function () {
+        fetchLeaveRequests('PENDING');
+    });
+});
+
+
+
+
 
 function logout() {
     // Clear user data from localStorage
@@ -597,4 +962,51 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchEmployeeData();  // Load employee data
     fetchAdminDashboardData();  // Load dashboard data
+});
+// Function to get the authorization token from localStorage
+function getAuthToken() {
+    return localStorage.getItem("accessToken");
+}
+
+// Function to check if the token is expired
+function isTokenExpired(token) {
+    if (!token) return true; // If no token exists, consider it expired
+
+    // Decode the JWT token
+    const decodedToken = decodeJwt(token);
+
+    // Get the current time in seconds
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    // Check if the token has expired by comparing the expiration time with the current time
+    return decodedToken.exp < currentTime;
+}
+
+// Decode the JWT token
+function decodeJwt(token) {
+    const base64Url = token.split('.')[1]; // Get the payload part of the JWT
+    const base64 = base64Url.replace('-', '+').replace('_', '/'); // Fix URL encoding
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// Redirect to home.html if the token is expired on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const token = getAuthToken();
+
+    if (isTokenExpired(token)) {
+        console.log('Token expired. Redirecting to home.html...');
+
+        // Show an alert message to the user
+        alert('Session expired. Please log in again.');
+
+        // Redirect after a brief moment (you can adjust the delay if needed)
+        setTimeout(() => {
+            window.location.href = '/'; // Redirect to home.html
+        }, 2000); // Delay the redirect by 2 seconds
+    } else {
+        console.log('Token is valid.');
+    }
 });

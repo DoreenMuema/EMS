@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard.css"> <!-- Link to your CSS file -->
-    <script src="/js/dashboard/employeeDashboard.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -24,11 +23,11 @@
             <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
 
-    <<!-- Main Content -->
+    <!-- Main Content -->
     <div class="main">
         <div class="top-navbar">
             <div class="nav-left">
@@ -40,12 +39,12 @@
                         <a href="/notifications">
                             <i class="fas fa-bell" id="notificationBell"></i>
                         </a>
+                    </li>
                 </ul>
             </div>
         </div>
-        <!-- Dashboard Top Section -->
 
-        <!-- Skills / Statistics -->
+        <!-- Dashboard Top Section -->
         <div class="main-skills">
             <div class="card">
                 <div class="card-icon">
@@ -62,10 +61,9 @@
                 </div>
                 <div class="card-content">
                     <h3>Leaves</h3>
-                    <button id="requestLeaveBtn">Request Leave </button>
+                    <button id="requestLeaveBtn">Request Leave</button>
                 </div>
             </div>
-            <!-- New Finance Card -->
             <div class="card">
                 <div class="card-icon">
                     <i class="fas fa-wallet"></i>
@@ -77,31 +75,39 @@
             </div>
         </div>
 
-        <!-- Upcoming Deadlines -->
-        <div class="main-course">
-            <h2>Upcoming Deadlines</h2>
-            <div class="course-box">
-                <ul>
-                    <li class="active">Today</li>
-                    <li>This Week</li>
-                    <li>This Month</li>
+        <!-- Recent Activities -->
+        <div class="recent-activities">
+            <h2>Recent Activities</h2>
+            <div class="activities-box">
+                <ul class="tabs">
+                    <li class="tab active" data-tab="employeeTasks">Assigned Tasks</li>
+                    <li class="tab" data-tab="employeeLeaves">Leave Requests</li>
+                    <li class="tab" data-tab="employeeFinance">Finance Requests</li>
                 </ul>
-                <div class="course">
-                    <div class="box">
-                        <i class="fas fa-file-alt"></i>
-                        <p>Task Report Submission</p>
-                        <button>Submit</button>
+                <div class="activities">
+                    <div class="activity-content" id="employeeTasks" style="display: block;">
+                        <div id="employeeTasks-container">
+                            <!-- Task list will be populated here -->
+                        </div>
                     </div>
-                    <div class="box">
-                        <i class="fas fa-bell"></i>
-                        <p>Reminder: Upcoming Team Meeting</p>
-                        <button>View Details</button>
+
+                    <div class="activity-content" id="employeeLeaves" style="display: none;">
+                        <div id="employeeRequests-container">
+                            <!-- List of leave requests will go here -->
+                        </div>
+                    </div>
+
+                    <div class="activity-content" id="employeeFinance" style="display: none;">
+                        <div id="employeeFinanceRequests-container">
+                            <!-- Finance request data will go here -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
+
+<script src="/js/dashboard/employeeDashboard.js"></script>
 </body>
 </html>

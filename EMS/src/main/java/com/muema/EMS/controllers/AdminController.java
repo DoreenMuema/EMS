@@ -3,6 +3,7 @@ package com.muema.EMS.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.muema.EMS.model.*;
 import com.muema.EMS.repo.EmployeeRepository;
+import com.muema.EMS.repo.FinanceRequestRepository;
 import com.muema.EMS.repo.LeaveRepository;
 import com.muema.EMS.repo.TaskRepository;
 import com.muema.EMS.services.*;
@@ -12,8 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +30,11 @@ import org.springframework.security.core.GrantedAuthority;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -45,6 +54,7 @@ public class AdminController {
     private final EmployeeService employeeService;
     private final FinanceRequestService financeRequestService;
     private final EmployeeRepository employeeRepository;
+    private final FinanceRequestRepository financeRequestRepository;
 
 
     @Autowired
@@ -59,7 +69,7 @@ public class AdminController {
                            LeaveRepository leaveRepository,
                            NotificationService notificationService,
                            FinanceRequestService financeRequestService,
-                           EmployeeRepository employeeRepository1) {
+                           EmployeeRepository employeeRepository1, FinanceRequestRepository financeRequestRepository) {
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
@@ -69,7 +79,9 @@ public class AdminController {
         this.employeeService = employeeService;
         this.financeRequestService = financeRequestService;
         this.employeeRepository = employeeRepository1;
+        this.financeRequestRepository = financeRequestRepository;
     }
+
     @PostMapping("/admin_login")
     public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> loginRequest,
                                                           HttpServletResponse response) {
@@ -115,7 +127,6 @@ public class AdminController {
                     .body(Map.of("error", "Invalid email or password"));
         }
     }
-
 
 
     @GetMapping("/dashboard")
@@ -363,6 +374,42 @@ public class AdminController {
         return ResponseEntity.ok(leavesResponse);
     }
 
+    @GetMapping("/leaves/status/{status}")
+    @Secured("ROLE_ADMIN")
+    public ResponseEntity<List<Map<String, Object>>> getLeavesByStatus(@PathVariable String status) throws JsonProcessingException {
+        // Get the leaves by the specified status
+        List<LeaveApplication> leavesByStatus = leaveService.getLeavesByStatus(status.toUpperCase());
+
+        // Example business rule: If the leave's end date has passed and it's still pending, mark it as "REJECTED"
+        for (LeaveApplication leave : leavesByStatus) {
+            if (leave.getStatus().equals("PENDING") && leave.getEndDate().isBefore(LocalDate.now())) {
+                leave.setStatus("REJECTED");
+            }
+            leaveService.save(leave);
+        }
+
+        // Create a list of maps for custom JSON response
+        List<Map<String, Object>> leavesResponse = new ArrayList<>();
+        for (LeaveApplication leave : leavesByStatus) {
+            Map<String, Object> leaveData = new HashMap<>();
+            leaveData.put("id", leave.getId());
+            leaveData.put("employeeFirstName", leave.getFirstName());
+            leaveData.put("employeeSurname", leave.getSurname());
+            leaveData.put("startDate", leave.getStartDate());
+            leaveData.put("endDate", leave.getEndDate());
+            leaveData.put("reason", leave.getReason());
+            leaveData.put("status", leave.getStatus());
+            leaveData.put("description", leave.getDescription());
+            leaveData.put("leaveType", leave.getLeaveType());
+
+            leavesResponse.add(leaveData);
+        }
+
+        // Return a custom JSON response
+        return ResponseEntity.ok(leavesResponse);
+    }
+
+
     @PostMapping("/approve-leave/{applicationId}")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<Map<String, Object>> approveLeaveApplication(@PathVariable Long applicationId) {
@@ -399,6 +446,7 @@ public class AdminController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     // Reject leave application
     @PostMapping("/reject-leave/{applicationId}")
     @Secured("ROLE_ADMIN")
@@ -511,6 +559,24 @@ public class AdminController {
         }
         return ResponseEntity.notFound().build();
     }
+    @GetMapping("/tasks/status/{status}")
+    public ResponseEntity<List<Task>> getTasksByStatus(@PathVariable("status") String status) {
+        // Validate the status (optional, depending on your business logic)
+        if (status == null || status.isEmpty()) {
+            throw new RuntimeException("Status must be provided in the URL.");
+        }
+
+        // Fetch tasks by status
+        List<Task> tasks = taskService.findByStatus(status);
+
+        if (tasks.isEmpty()) {
+            return ResponseEntity.noContent().build();  // Return a 204 No Content if no tasks found
+        }
+
+        // Return the tasks with a 200 OK status
+        return ResponseEntity.ok(tasks);
+    }
+
 
 
     // Get all tasks for all employees (no id required)
@@ -584,6 +650,7 @@ public class AdminController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
     // Endpoint to approve a financial request
     @PatchMapping("/requests/{requestId}/approve")
     @Secured({"ROLE_ADMIN"})
@@ -625,5 +692,40 @@ public class AdminController {
             return ResponseEntity.status(500).body(Map.of("error", "An error occurred while rejecting the request."));
         }
     }
+    private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
+    private String getProofFileName(Long requestId) {
+        // Assuming you have a service that retrieves the proof file name from the database
+        Optional<FinancialRequest> request = financeRequestRepository.findById(requestId);
+
+        if (request.isPresent() && request.get().getProofFileUrl() != null) {
+            return request.get().getProofFileUrl(); // Ensure this returns the correct filename
+        } else {
+            throw new RuntimeException("Proof file not found for request ID: " + requestId);
+        }
+    }
+
+
+    @GetMapping("/download-proof/{requestId}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long requestId) {
+        try {
+            // Assuming proofFileUrl is stored in DB and mapped to requestId
+            String proofFileName = getProofFileName(requestId); // Implement this method
+
+            Path filePath = fileStorageLocation.resolve(proofFileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists()) {
+                throw new FileNotFoundException("File not found: " + proofFileName);
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + proofFileName + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 }

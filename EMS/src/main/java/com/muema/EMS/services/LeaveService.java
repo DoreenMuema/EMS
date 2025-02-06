@@ -223,4 +223,9 @@ public class LeaveService {
 
         return updatedLeaveApplication;
     }
+
+    public List<LeaveApplication> getLeavesByStatus(String status) {
+        return leaveRepository.findByStatus(status);
+    }
+
 }

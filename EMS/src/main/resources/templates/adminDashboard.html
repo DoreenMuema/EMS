@@ -24,7 +24,8 @@
             <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
             <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+
         </ul>
     </nav>
 
@@ -39,10 +40,6 @@
                     <li><a href="/notifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
                 </ul>
             </div>
-        </div>
-        <!-- Notifications List (add this in your HTML) -->
-        <div id="notificationsSection">
-            <ul id="notificationsList"></ul> <!-- List of notifications -->
         </div>
 
 
@@ -91,20 +88,31 @@
             <h2>Recent Activities</h2>
             <div class="activities-box">
                 <ul class="tabs">
-                    <li class="active">Today</li>
-                    <li>Leave Requests</li>
-                    <li>Tasks</li>
+                    <li class="tab active" data-tab="tasks">Tasks</li>
+                    <li class="tab" data-tab="leaves">Leave Requests</li>
+                    <li class="tab" data-tab="finance">Finance</li> <!-- Finance Tab -->
                 </ul>
                 <div class="activities">
-                    <div class="activity">
-                        <i class="fas fa-file-alt"></i>
-                        <p>Task Report Submission</p>
-                        <button>Submit</button>
+                    <!-- Tasks Activities (Default View) -->
+                    <div class="activity-content" id="tasks" style="display: none;">
+                        <div id="tasks-container">
+                            <!-- List of finance requests will be dynamically added here -->
+                        </div>
                     </div>
-                    <div class="activity">
-                        <i class="fas fa-bell"></i>
-                        <p>Reminder: Upcoming Team Meeting</p>
-                        <button>View Details</button>
+
+                    <!-- Leave Requests Activities (Initially Hidden) -->
+                    <div class="activity-content" id="leaves" style="display: none;">
+                        <div id="leaves-requests-container">
+                            <!-- List of finance requests will be dynamically added here -->
+                        </div>
+
+                    </div>
+
+                    <!-- Finance Activities (Initially Hidden) -->
+                    <div class="activity-content" id="finance" style="display: none;">
+                        <div id="finance-requests-container">
+                            <!-- List of finance requests will be dynamically added here -->
+                        </div>
                     </div>
                 </div>
             </div>

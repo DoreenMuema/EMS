@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard.css">
-    <script src="/js/dashboard/adminDashboard.js"></script>
+    <script src="/js/dashboard/adminDashboard.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -60,57 +60,12 @@
                     </tr>
                     </thead>
                     <tbody id="leave-table-body">
-                    <!-- Sample Employee Leave Requests -->
-                    <tr>
-                        <td>Jane Doe</td>
-                        <td>Annual Leave</td>
-                        <td>2025-02-01</td>
-                        <td>2025-02-10</td>
-                        <td>Approved</td>
-                        <td>
-                            <button class="btn-approve">Approve</button>
-                            <button class="btn-reject">Reject</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>John Smith</td>
-                        <td>Sick Leave</td>
-                        <td>2025-02-03</td>
-                        <td>2025-02-05</td>
-                        <td>Pending</td>
-                        <td>
-                            <button class="btn-approve">Approve</button>
-                            <button class="btn-reject">Reject</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Alice Johnson</td>
-                        <td>Maternity Leave</td>
-                        <td>2025-02-15</td>
-                        <td>2025-05-15</td>
-                        <td>Approved</td>
-                        <td>
-                            <button class="btn-approve">Approve</button>
-                            <button class="btn-reject">Reject</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Michael Brown</td>
-                        <td>Casual Leave</td>
-                        <td>2025-01-28</td>
-                        <td>2025-01-30</td>
-                        <td>Rejected</td>
-                        <td>
-                            <button class="btn-approve">Approve</button>
-                            <button class="btn-reject">Reject</button>
-                        </td>
-                    </tr>
+                    <!-- Leave requests will be populated dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
-<script src="/js/dashboard/adminDashboard.js"></script>
 </body>
 </html>

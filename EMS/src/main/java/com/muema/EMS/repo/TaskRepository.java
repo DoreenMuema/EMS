@@ -15,4 +15,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     // Optionally, you can add more query methods as needed
     Optional<Task> findById(Long taskId);
+
+    List<Task> findByStatus(String status);
+
+    List<Task> findByEmployeeIdAndStatus(Long employeeId, String pending);
 }

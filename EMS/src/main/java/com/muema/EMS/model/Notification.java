@@ -41,6 +41,7 @@ public class Notification {
     private LeaveApplication leaveApplication; // Optional, if it's related to a leave application
 
     public enum NotificationType {
+        FINANCE_REQUEST,
         LEAVE_REQUEST,
         TASK_ASSIGNMENT,
         MEETING_REMINDER,

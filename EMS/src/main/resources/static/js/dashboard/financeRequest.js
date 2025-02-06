@@ -64,20 +64,9 @@ function getAuthToken() {
     return token;
 }
 
-// Function to get the employee ID
-function getEmployeeId() {
-    const employeeId = localStorage.getItem("employeeId");
-    if (!employeeId) {
-        alert("Missing employee ID. Please log in again.");
-        window.location.href = "/login"; // Redirect to login if no employee ID
-    }
-    return employeeId;
-}
-
 // Function to load financial requests
 function loadFinanceRequests(filter = {}) {
     const { status, type } = filter;
-    const employeeId = getEmployeeId(); // Ensure the employee ID is included in the request
 
     // Construct the API URL dynamically based on the filters
     let url = `${API_BASE_URL}/all-financeRequests`;
@@ -91,7 +80,6 @@ function loadFinanceRequests(filter = {}) {
     fetch(url, {
         headers: {
             "Authorization": `Bearer ${getAuthToken()}`,
-            "X-Employee-ID": employeeId, // Include employee ID in every request
         },
     })
         .then(response => {
@@ -113,7 +101,7 @@ function loadFinanceRequests(filter = {}) {
                 // Display a message if no requests are found
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" style="text-align: center;">No requests found</td>
+                        <td colspan="6" style="text-align: center;">No requests found</td>
                     </tr>
                 `;
                 return;
@@ -128,14 +116,16 @@ function loadFinanceRequests(filter = {}) {
                     <td>${request.itemDescription}</td>
                     <td>${request.type || "N/A"}</td>
                     <td>${request.status}</td>
-                     <td>
-                    ${request.proofFileUrl ?
-                    `<a href="${request.proofFileUrl}" target="_blank">Download Proof</a>` :
-                    'No proof file'}
-                </td>
                     <td>
-                        <button class="approve-btn" onclick="approveRequest(${request.id})">Approve</button>
-                        <button class="reject-btn" onclick="rejectRequest(${request.id})">Reject</button>
+                        ${request.proofFileUrl ?
+                    `<button class="download-btn" onclick="downloadProof(${request.id})">Download Proof</button>`
+                    : 'No proof file'}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="approve-btn" onclick="approveRequest(${request.id}, ${request.employee.id})">Approve</button>
+                            <button class="reject-btn" onclick="rejectRequest(${request.id}, ${request.employee.id})">Reject</button>
+                        </div>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -144,15 +134,51 @@ function loadFinanceRequests(filter = {}) {
         .catch(error => console.error("Error loading finance requests:", error));
 }
 
-// Function to approve a financial request
-function approveRequest(requestId) {
-    const employeeId = getEmployeeId(); // Include employee ID
+// Function to download proof with token
+function downloadProof(requestId) {
+    const token = getAuthToken(); // Retrieve token from localStorage
+    if (!token) {
+        alert("You are not authenticated. Please log in again.");
+        return;
+    }
 
+    const url = `${API_BASE_URL}/download-proof/${requestId}`;
+
+    fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${token}`,
+        },
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to download file: ${response.statusText}`);
+            }
+            return response.blob(); // Convert response to Blob
+        })
+        .then(blob => {
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = downloadUrl;
+            a.download = `proof_${requestId}.pdf`; // Customize filename
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl); // Clean up
+        })
+        .catch(error => {
+            console.error("Error downloading proof file:", error);
+            alert("Failed to download proof file.");
+        });
+}
+
+
+// Function to approve a financial request
+function approveRequest(requestId, employeeId) {
     fetch(`${API_BASE_URL}/requests/${requestId}/approve`, {
         method: "PATCH",
         headers: {
             "Authorization": `Bearer ${getAuthToken()}`,
-            "X-Employee-ID": employeeId,
+            "X-Employee-ID": employeeId, // Use the employeeId from the request data
             "Content-Type": "application/json",
         },
     })
@@ -170,14 +196,12 @@ function approveRequest(requestId) {
 }
 
 // Function to reject a financial request
-function rejectRequest(requestId) {
-    const employeeId = getEmployeeId(); // Include employee ID
-
+function rejectRequest(requestId, employeeId) {
     fetch(`${API_BASE_URL}/requests/${requestId}/reject`, {
         method: "PATCH",
         headers: {
             "Authorization": `Bearer ${getAuthToken()}`,
-            "X-Employee-ID": employeeId,
+            "X-Employee-ID": employeeId, // Use the employeeId from the request data
             "Content-Type": "application/json",
         },
     })
@@ -214,7 +238,6 @@ window.addEventListener("DOMContentLoaded", () => {
 function logout() {
     // Clear user data from localStorage
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("employeeId");
 
     // Redirect to the home page
     window.location.href = "/";

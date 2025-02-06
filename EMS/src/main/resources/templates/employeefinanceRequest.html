@@ -24,7 +24,8 @@
             <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="#"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+
         </ul>
     </nav>
     <!-- Main Content -->
@@ -41,58 +42,109 @@
         </div>
         <!-- Dashboard Top Section -->
 
-        <!-- Button to Trigger Modal -->
-        <button id="newRequestButton">New Finance Request</button>
+        <!-- Button to Trigger Modal for Claims -->
+        <button id="newClaimRequestButton">New Claim Request</button>
+        <!-- Button to Trigger Modal for Requisitions -->
+        <button id="newRequisitionRequestButton">New Requisition Request</button>
 
-        <!-- Modal Section (Initially Hidden) -->
-        <section class="main" id="requestModal" style="display: none;">
+        <!-- Modal Section for Claims (Initially Hidden) -->
+        <section class="main" id="claimModal" style="display: none;">
             <div class="modal-content">
-                <form id="createRequestForm" enctype="multipart/form-data">
+                <form id="createClaimForm" enctype="multipart/form-data">
                     <!-- Modal Header with Close Button -->
-                    <!-- Modal Header -->
                     <div class="modal-header">
-                        <h2>Create New Finance Request</h2>
-                        <span class="close" id="closeModal">&times;</span> <!-- Close button inside the form -->
+                        <h2>Create New Claim Request</h2>
                     </div>
 
                     <input type="hidden" id="employeeId" value="123"> <!-- Replace with dynamic employee ID -->
 
                     <div>
-                        <label for="itemDescription">Item Description:</label>
-                        <input type="text" id="itemDescription" name="itemDescription" required>
+                        <label for="claimItemDescription">Item Description:</label>
+                        <input type="text" id="claimItemDescription" name="itemDescription" required>
                     </div>
 
-
                     <div>
-                        <label for="amount">Amount:</label>
+                        <label for="claimAmount">Amount:</label>
                         <div class="amount-container">
-                            <input type="number" id="amount" name="amount" step="0.01" required>
-
-                            <span>Kshs</span> <!-- Added Kshs next to the amount input -->
+                            <input type="number" id="claimAmount" name="amount" step="0.01" required>
+                            <span>Kshs</span>
                         </div>
                     </div>
 
                     <div>
-                        <label for="requestType">Request Type:</label>
-                        <select id="requestType" name="type" required> <!-- 'name="type"' is added -->
+                        <label for="claimRequestType">Request Type:</label>
+                        <select id="claimRequestType" name="type" required>
                             <option value="CLAIM">CLAIM</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="claimDate">Claim Date:</label>
+                        <input type="date" id="claimDate" name="claimDate" required>
+                        <p id="claimDateMessage" style="color:red;">Claim requests must be made for past dates only.</p>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div>
+                        <label for="claimFileUpload">Upload Proof (Image/PDF):</label>
+                        <input type="file" id="claimFileUpload" name="proofFile" accept="image/*,application/pdf" required>
+                    </div>
+
+                    <button type="submit" class="employee-table button">Create Claim</button>
+                    <button type="button" id="cancelClaimRequestBtn" class="cancel-button">Cancel</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Modal Section for Requisitions (Initially Hidden) -->
+        <section class="main" id="requisitionModal" style="display: none;">
+            <div class="modal-content">
+                <form id="createRequisitionForm" enctype="multipart/form-data">
+                    <!-- Modal Header with Close Button -->
+                    <div class="modal-header">
+                        <h2>Create New Requisition Request</h2>
+                    </div>
+
+                    <input type="hidden" id="employeeId" value="123"> <!-- Replace with dynamic employee ID -->
+
+                    <div>
+                        <label for="requisitionItemDescription">Item Description:</label>
+                        <input type="text" id="requisitionItemDescription" name="itemDescription" required>
+                    </div>
+
+                    <div>
+                        <label for="requisitionAmount">Amount:</label>
+                        <div class="amount-container">
+                            <input type="number" id="requisitionAmount" name="amount" step="0.01" required>
+                            <span>Kshs</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="requisitionRequestType">Request Type:</label>
+                        <select id="requisitionRequestType" name="type" required>
                             <option value="REQUISITION">REQUISITION</option>
                         </select>
                     </div>
 
-
-                    <!-- File Upload Section -->
                     <div>
-                        <label for="fileUpload">Upload Proof (Image/PDF):</label>
-                        <input type="file" id="fileUpload" name="proofFile" accept="image/*,application/pdf" required>
-
+                        <label for="requisitionDate">Requisition Date:</label>
+                        <input type="date" id="requisitionDate" name="requisitionDate" required>
+                        <p id="requisitionDateMessage" style="color:red;">Requisition requests must be made for future dates only.</p>
                     </div>
 
-                    <button type="submit" class="employee-table button">Create Request</button>
-                    <button type="button" id="cancelRequestBtn" class="cancel-button">Cancel</button> <!-- Cancel Button -->
+                    <!-- Description Field Instead of File Upload -->
+                    <div>
+                        <label for="requisitionDescription">Description:</label>
+                        <textarea id="requisitionDescription" name="description" rows="4" required></textarea>
+                    </div>
+
+                    <button type="submit" class="employee-table button">Create Requisition</button>
+                    <button type="button" id="cancelRequisitionRequestBtn" class="cancel-button">Cancel</button>
                 </form>
             </div>
         </section>
+
 
         <!-- Section to Display Financial Requests -->
         <section>
@@ -104,8 +156,11 @@
                     <th>Item Description</th>
                     <th>Amount</th>
                     <th>Status</th>
-                    <th>Type</th> <!-- Added column for Type -->
+                    <th>Type</th>
+                    <th>Description</th>
                     <th>Proof File</th>
+                    <th>Claim Date</th>
+                    <th>Requisition Date </th>
                     <th>Created Date</th>
 
                 </tr>
@@ -118,5 +173,6 @@
 
     </div>
 </div>
+
 </body>
 </html>

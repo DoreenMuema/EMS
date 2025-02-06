@@ -61,4 +61,5 @@ public class Employee {
     public void setActive(Boolean active) {
         this.isActive = active;
     }
+
 }

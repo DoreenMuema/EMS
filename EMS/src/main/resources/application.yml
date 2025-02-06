@@ -21,7 +21,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   web:
     resources:
-      static-locations: classpath:/static/ , classpath:/public/
+      static-locations: classpath:/static/ , classpath:/public/ ,file:./uploads/
 
 
 logging:

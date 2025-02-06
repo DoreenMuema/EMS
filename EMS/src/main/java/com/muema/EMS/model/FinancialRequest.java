@@ -1,15 +1,15 @@
 package com.muema.EMS.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,26 +26,46 @@ public class FinancialRequest {
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "employee_id", nullable = false)
-        @JsonInclude(JsonInclude.Include.NON_NULL)  // Ensures null values for employee are excluded
+        @JsonInclude(JsonInclude.Include.NON_NULL) // Excludes null employee details
         private Employee employee;
 
-        @JsonView(Views.Public.class) // Fields to be included in response
+        @JsonView(Views.Public.class)
+        @Column(nullable = false)  // Ensure it cannot be null in DB
         private String itemDescription;
 
         @JsonView(Views.Public.class)
+        @Column(nullable = false)
         private Double amount;
 
         @JsonView(Views.Public.class)
+        @Column(nullable = false)
         private String status;
 
-        private String proofFileUrl; // Store URL/path instead of byte array
+        @JsonView(Views.Public.class)
+        @Column(columnDefinition = "TEXT") // Ensure long descriptions can be stored
+        private String description;  // Now properly stored in the database
 
+        @Column(nullable = true) // Proof file is optional
+        private String proofFileUrl;
 
         @JsonView(Views.Public.class)
+        @Column(nullable = false, updatable = false)
         private LocalDateTime createdDate = LocalDateTime.now();
 
-        @Enumerated(EnumType.STRING)
+        @Getter
+        @Column(nullable = true) // Optional field for claimDate
+        private LocalDate claimDate;
+
+        @Getter
+        @Column(nullable = true) // Optional field for requisitionDate
+        private LocalDate requisitionDate;
+
+
+    @Enumerated(EnumType.STRING)
+        @Column(nullable = false)  // Ensure type is always specified
         private FinancialRequestType type;
+
+
 
         public enum FinancialRequestType {
                 REQUISITION,
@@ -56,11 +76,11 @@ public class FinancialRequest {
                 public static class Public {} // Define public view for serialization control
         }
 
-        // Custom method to fetch employee ID and username only
+        // Fetch employee ID and username only
         @JsonProperty("employee")
         public EmployeeInfo getEmployeeInfo() {
                 if (employee != null) {
-                        return new EmployeeInfo(employee.getId(), employee.getFirstName(),employee.getSurname());
+                        return new EmployeeInfo(employee.getId(), employee.getFirstName(), employee.getSurname());
                 }
                 return null;
         }
