@@ -16,7 +16,7 @@ if (viewLeaveBtn) {
     console.log("leaves button found");
     viewLeaveBtn.addEventListener("click", () => {
         console.log("Button clicked");
-        window.location.href = "/manageleaves";
+        window.location.href = "/manageLeaves";
     });
 } else {
     console.error("Request Leave button not found.");
