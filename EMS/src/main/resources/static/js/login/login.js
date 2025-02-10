@@ -1,16 +1,15 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const togglePassword = document.getElementById('toggle-password');
     const passwordField = document.getElementById('password');
     const eyeIcon = document.getElementById('eye-icon');
 
-    // Initially, the password should be hidden, so the icon should be "eye"
+    // Initialize password visibility
     if (passwordField.type === 'password') {
         eyeIcon.classList.remove('fa-eye-slash');
         eyeIcon.classList.add('fa-eye');
     }
 
     togglePassword.addEventListener('click', function () {
-        // Toggle password visibility
         if (passwordField.type === 'password') {
             passwordField.type = 'text';
             eyeIcon.classList.remove('fa-eye');
@@ -23,16 +22,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-const form = document.getElementById('adminLoginForm');
+const form = document.getElementById('loginForm');
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     console.log("Login form submitted");
 
-    const email = form.elements['email'].value;
-    const password = form.elements['password'].value;
+    const email = form.elements['email'].value.trim();
+    const password = form.elements['password'].value.trim();
     const emailError = document.getElementById('emailError');
     const passwordError = document.getElementById('passwordError');
-    const responseElement = document.getElementById('loginResponse'); // Make sure the element exists in the DOM
+    const responseElement = document.getElementById('loginResponse');
 
     // Clear previous error messages
     emailError.innerHTML = '';
@@ -40,8 +39,8 @@ form.addEventListener('submit', async (e) => {
     responseElement.innerHTML = '';
 
     try {
-        console.log("Sending login request with credentials...");
-        const response = await fetch('/api/admin/admin_login', {
+        console.log("Sending login request...");
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -51,42 +50,56 @@ form.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             console.log("Login successful:", responseData);
-            const { token, email, role } = responseData;
+            const { token, role } = responseData;
 
             localStorage.setItem('accessToken', token);
             localStorage.setItem('email', email);
             localStorage.setItem('role', role);
 
-            // Redirect to appropriate dashboard based on role
-            if (role === 'ROLE_EMPLOYEE') {
+            // Redirect based on role
+            if (role === 'ROLE_ADMIN') {
+                window.location.href = '/adminDashboard';
+            } else if (role === 'ROLE_EMPLOYEE') {
                 window.location.href = '/employeeDashboard';
             } else {
-                window.location.href = '/adminDashboard';
+                responseElement.innerHTML = `<div class="alert alert-danger">Unauthorized role detected.</div>`;
             }
         } else {
             const error = responseData.error || "Login failed. Please check your credentials.";
             console.error("Login failed:", error);
 
-            // Provide user-friendly messages based on specific error
+            // Reset error messages
+            let isEmailError = false;
+            let isPasswordError = false;
+
             if (error.toLowerCase().includes('email')) {
-                emailError.innerHTML = 'Oops! We couldn\'t find an account with that email. Please try again.';
-            } else if (error.toLowerCase().includes('password')) {
-                passwordError.innerHTML = 'Incorrect password. Please try again.';
-            } else {
-                responseElement.innerHTML = `
-                    <div class="alert alert-danger">Login failed. Please check your credentials and try again.</div>
-                `;
+                isEmailError = true;
+                emailError.innerHTML = 'We couldn’t find an account with that email.';
             }
 
-            // Clear the localStorage to ensure the user is logged out
+            if (error.toLowerCase().includes('password')) {
+                isPasswordError = true;
+                passwordError.innerHTML = 'Incorrect password. Please try again.';
+            }
+
+            // Display appropriate error message
+            if (isEmailError && isPasswordError) {
+                responseElement.innerHTML = `<div class="alert alert-danger">Incorrect email and password.</div>`;
+            } else if (isEmailError) {
+                responseElement.innerHTML = `<div class="alert alert-danger">Invalid email. Please check your input.</div>`;
+            } else if (isPasswordError) {
+                responseElement.innerHTML = `<div class="alert alert-danger">Incorrect password.</div>`;
+            } else {
+                responseElement.innerHTML = `<div class="alert alert-danger">${error}</div>`;
+            }
+
+            // Clear local storage
             localStorage.removeItem('accessToken');
             localStorage.removeItem('email');
             localStorage.removeItem('role');
         }
     } catch (error) {
         console.error("Error during login:", error);
-        responseElement.innerHTML = `
-            <div class="alert alert-danger">An error occurred. Please try again later.</div>
-        `;
+        responseElement.innerHTML = `<div class="alert alert-danger">An error occurred. Please try again later.</div>`;
     }
 });

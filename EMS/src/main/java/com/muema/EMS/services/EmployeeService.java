@@ -25,17 +25,18 @@ public class EmployeeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$";
+    private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
 
     // Validate password strength according to PCI DSS and custom requirements
     public boolean isPasswordValid(String password) {
-        if (password == null || password.length() < 12) { // PCI DSS recommends at least 12 characters
+        if (password == null || password.length() < 8) { // Updated minimum length to 8
             return false; // Invalid password if it's too short
         }
 
         // Check complexity for uppercase, lowercase, digits, and special characters
         return Pattern.matches(PASSWORD_PATTERN, password); // Valid if it matches the pattern
     }
+
 
     // Get all employees
     public List<Employee> getAllEmployee() {

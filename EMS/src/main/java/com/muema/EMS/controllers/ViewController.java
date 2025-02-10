@@ -10,15 +10,11 @@ public class ViewController {
     public String homePage() {
         return "home";
     }
-    @GetMapping("/adminLogin")
-    public String adminLogin() {
-        return "adminLogin";
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login"; // This will return the new combined login page
     }
 
-    @GetMapping("/employeeLogin")
-    public String employeeLogin() {
-        return "employeeLogin";
-    }
     @GetMapping("/adminDashboard")
     public String adminDashboard() {
         return "adminDashboard";

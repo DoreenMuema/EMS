@@ -82,52 +82,6 @@ public class AdminController {
         this.financeRequestRepository = financeRequestRepository;
     }
 
-    @PostMapping("/admin_login")
-    public ResponseEntity<Map<String, Object>> adminLogin(@RequestBody Map<String, String> loginRequest,
-                                                          HttpServletResponse response) {
-        String email = loginRequest.get("email");
-        String password = loginRequest.get("password");
-
-        try {
-            Optional<Employee> employee = employeeService.findByEmail(email);
-            if (employee.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Email is incorrect"));
-            }
-
-            if (!passwordEncoder.matches(password, employee.get().getPassword())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Password is incorrect"));
-            }
-
-            // Authenticate the user with email and password
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
-            );
-
-            // Set the authentication context
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Generate JWT token with email and role
-            String jwtToken = jwtUtils.generateToken(authentication.getName(), authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority).findFirst().orElse("ROLE_USER"));
-
-            response.setHeader("Authorization", "Bearer " + jwtToken);
-
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("token", jwtToken);
-            responseBody.put("message", "Login successful");
-            responseBody.put("email", email);
-            responseBody.put("role", authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority).findFirst().orElse("ROLE_USER"));
-
-            return ResponseEntity.ok(responseBody);
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid email or password"));
-        }
-    }
-
 
     @GetMapping("/dashboard")
     @Secured("ROLE_ADMIN")

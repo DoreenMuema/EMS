@@ -7,6 +7,7 @@ import com.muema.EMS.repo.LeaveRepository;
 import com.muema.EMS.repo.LeavesBalancesRepository;
 import com.muema.EMS.services.*;
 import io.jsonwebtoken.io.IOException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -76,52 +78,6 @@ public class EmployeeController {
         this.financeRequestRepository = financeRequestRepository;
     }
 
-    @PostMapping("/employee_login")
-    public ResponseEntity<Map<String, Object>> loginEmployee(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String password = body.get("password");
-
-        if (email == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email and password must be provided"));
-        }
-
-        try {
-            // Fetch employee details to check the activation status
-            Optional<Employee> optionalEmployee = employeeService.findByEmail(email);
-            if (optionalEmployee.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
-            }
-
-            Employee employee = optionalEmployee.get();
-
-            // Check if the account is deactivated
-            if (!employee.isActive()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Account is deactivated"));
-            }
-
-            // Proceed with authentication
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Generate a JWT token
-            String accessToken = jwtUtils.generateToken(employee.getEmail(), employee.getRole());
-
-            // Build the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("employeeId", employee.getId());
-            response.put("accessToken", accessToken);
-            response.put("email", employee.getEmail());
-            response.put("role", employee.getRole());
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Authentication failed: " + e.getMessage()));
-        }
-    }
 
 
     @GetMapping("/profile/{employeeId}")

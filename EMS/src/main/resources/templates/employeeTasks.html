@@ -70,7 +70,26 @@
                     <button type="submit">Submit Request</button>
                 </form>
             </div>
+
+        <div id="taskDetailsPopup" class="popup hidden">
+            <div class="popup-content">
+                <span class="close" onclick="closePopup()">&times;</span>
+                <h2 id="popupTaskTitle"></h2>
+                <p><strong>Description:</strong> <span id="popupTaskDescription"></span></p>
+                <p><strong>Assigned By:</strong> <span id="popupAssignedBy"></span></p>
+                <p><strong>Assigned Employee:</strong> <span id="popupEmployee"></span></p>
+                <p><strong>Status:</strong> <span id="popupStatus"></span></p>
+                <p><strong>Due Date:</strong> <span id="popupDueDate"></span></p>
+                <p><strong>Assigned Date:</strong> <span id="popupAssignedDate"></span></p>
+                <p><strong>Extension Reason:</strong> <span id="popupExtensionReason"></span></p>
+                <p><strong>Extension Approval:</strong> <span id="popupExtensionApproval"></span></p>
+            </div>
         </div>
+
+
     </div>
+
+    </div>
+
 </body>
 </html>
