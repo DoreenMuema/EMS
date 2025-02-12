@@ -1982,5 +1982,98 @@ h2 {
 .reject-btn:hover {
     background-color: #bc0909;
 }
+.finance-dropdown {
+    position: relative;
+}
+.finance-dropdown {
+    position: relative; /* Ensure dropdown position is relative to its parent */
+    z-index: 1000; /* Keeps it above sidebar */
+}
 
+.finance-dropdown .dropdown-menu {
+    display: none;
+    position: absolute;
+    left: 100%; /* Position beside the dropdown */
+    top: 0;
+    background: #fff;
+    list-style: none;
+    padding: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    width: 200px;
+    border-radius: 5px;
+    z-index: 99999; /* SUPER HIGH z-index */
+    white-space: nowrap;
+    overflow: visible;
+}
+
+.finance-dropdown .dropdown-menu.show {
+    display: block;
+}
+
+.finance-dropdown .dropdown-menu li {
+    padding: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.finance-dropdown .dropdown-menu li:hover {
+    background: #f0f0f0;
+}
+
+.sidebar {
+    position: relative;
+    z-index: 100; /* Lower than the dropdown */
+    overflow: visible !important; /* Prevents clipping */
+}
+/* General Dropdown Styling */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    left: 100%; /* Position beside the dropdown */
+    top: 0;
+    background: #fff;
+    list-style: none;
+    padding: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    width: 200px;
+    border-radius: 5px;
+    z-index: 99999; /* SUPER HIGH z-index */
+    white-space: nowrap;
+    overflow: visible;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown-menu li:hover {
+    background: #f0f0f0;
+}
+
+/* Ensure Sidebar Doesn't Hide Dropdown */
+.sidebar {
+    position: relative;
+    z-index: 10;
+    overflow: visible !important;
+}
+
+.error {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+input.error-border {
+    border: 1px solid red;
+}
 

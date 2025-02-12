@@ -19,8 +19,30 @@
         <ul>
             <li><a href="/employeeDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/employeeProfile"><i class="fas fa-user"></i> Profile</a></li>
-            <li><a href="/employeeLeaveApplication"><i class="fas fa-envelope"></i> Leave Requests</a></li>
-            <li><a href="/employeefinanceRequest"><i class="fas fa-coins"></i> Finance</a></li>
+
+            <!-- Leave Requests Dropdown -->
+            <li class="dropdown leave-dropdown">
+                <a href="#" onclick="toggleDropdown(event, 'leave-dropdown')">
+                    <i class="fas fa-envelope"></i> Leave Requests
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/applyForLeave">Apply for Leave</a></li>
+                    <li><a href="/leaveHistory">Leave History</a></li>
+                </ul>
+            </li>
+
+            <!-- Finance Dropdown -->
+            <li class="dropdown finance-dropdown">
+                <a href="#" onclick="toggleDropdown(event, 'finance-dropdown')">
+                    <i class="fas fa-coins"></i> Finance
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/applyForClaim">Apply for Claim</a></li>
+                    <li><a href="/applyForRequisition">Apply for Requisition</a></li>
+                    <li><a href="/financeHistory">Finance History</a></li>
+                </ul>
+            </li>
+
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
             <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -92,17 +114,24 @@
                     <label for="idNumber">ID Number:</label>
                     <input type="text" id="idNumber" name="idNumber" required><br>
                     <!-- First Name Field -->
+                    <!-- First Name Field -->
                     <label for="firstName">First Name:</label>
-                    <input type="text" id="firstName" name="firstName" required><br>
+                    <input type="text" id="firstName" name="firstName" required>
+                    <span class="error" id="firstNameError">Name must be at least 2 letters, no numbers or special characters.</span>
+                    <br>
 
                     <!-- Surname Field -->
+                    <!-- Surname Field -->
                     <label for="surname">Surname:</label>
-                    <input type="text" id="surname" name="surname" required><br>
+                    <input type="text" id="surname" name="surname" required>
+                    <span class="error" id="surnameError">Name must be at least 2 letters, no numbers or special characters.</span>
+                    <br>
 
                     <!-- Other Name Field -->
                     <label for="otherName">Other Name:</label>
-                    <input type="text" id="otherName" name="otherName"><br>
-
+                    <input type="text" id="otherName" name="otherName">
+                    <span class="error" id="otherNameError">Name must be at least 2 letters, no numbers or special characters.</span>
+                    <br>
                     <!-- Phone Field -->
                     <label for="phone">Phone:</label>
                     <input type="tel" id="phone" name="phone" required><br>
@@ -135,14 +164,14 @@
 
                     <!-- Password Field -->
                     <label for="password">Password:</label>
-
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password" required placeholder="Enter your password">
                         <span class="password-toggle-icon" onclick="togglePassword('password', 'eye-icon')">
-        <i class="fas fa-eye" id="eye-icon"></i>
-    </span>
-                    </div><br>
-
+                    <i class="fas fa-eye" id="eye-icon"></i>
+                </span>
+                    </div>
+                    <span class="error" id="passwordError">Password must be at least 8 characters, contain a number and a special character.</span>
+                    <br>
 
                     <!-- Buttons -->
                     <button type="submit">Update Profile</button>
@@ -177,7 +206,9 @@
                         <span class="password-toggle-icon" onclick="togglePassword('newPassword', 'newEyeIcon')">
                     <i class="fas fa-eye" id="newEyeIcon"></i>
                 </span>
-                    </div><br>
+                    </div>
+                    <small id="passwordError" style="color: red; display: none;">Password must be at least 8 characters long, contain a number, and a special character.</small>
+                    <br>
 
                     <label for="confirmPassword">Confirm New Password:</label>
                     <div class="password-wrapper">
@@ -185,11 +216,12 @@
                         <span class="password-toggle-icon" onclick="togglePassword('confirmPassword', 'confirmEyeIcon')">
                     <i class="fas fa-eye" id="confirmEyeIcon"></i>
                 </span>
-                    </div><br>
+                    </div>
+                    <small id="confirmPasswordError" style="color: red; display: none;">Passwords do not match.</small>
+                    <br>
 
                     <button type="submit">Change Password</button>
                     <button type="button" id="closeModalBtn" class="cancel-button">Cancel</button>
-
                 </form>
             </div>
         </div>

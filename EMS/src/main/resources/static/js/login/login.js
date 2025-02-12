@@ -50,11 +50,21 @@ form.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             console.log("Login successful:", responseData);
-            const { token, role } = responseData;
 
+            // Extract values properly
+            const { token, role, employeeId } = responseData;
+
+            // Store common values
             localStorage.setItem('accessToken', token);
             localStorage.setItem('email', email);
             localStorage.setItem('role', role);
+
+            // Store employeeId **only if the user is an employee**
+            if (role === 'ROLE_EMPLOYEE') {
+                localStorage.setItem('employeeId', employeeId);
+            } else {
+                localStorage.removeItem('employeeId'); // Ensure it's removed for admins
+            }
 
             // Redirect based on role
             if (role === 'ROLE_ADMIN') {
@@ -93,13 +103,23 @@ form.addEventListener('submit', async (e) => {
                 responseElement.innerHTML = `<div class="alert alert-danger">${error}</div>`;
             }
 
-            // Clear local storage
+            // Clear local storage on failure
             localStorage.removeItem('accessToken');
             localStorage.removeItem('email');
             localStorage.removeItem('role');
+            localStorage.removeItem('employeeId');
         }
     } catch (error) {
         console.error("Error during login:", error);
         responseElement.innerHTML = `<div class="alert alert-danger">An error occurred. Please try again later.</div>`;
     }
 });
+
+// Function to fetch employeeId from localStorage
+function getEmployeeId() {
+    const role = localStorage.getItem('role');
+    if (role === 'ROLE_EMPLOYEE') {
+        return localStorage.getItem('employeeId');
+    }
+    return null; // Prevent access for non-employees
+}

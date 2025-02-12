@@ -64,6 +64,7 @@ adminSocket.onclose = function() {
     console.log('WebSocket connection closed.');
 };
 
+
 // Function to get the auth token
 
 function getAuthToken() {
@@ -935,6 +936,61 @@ document.addEventListener("DOMContentLoaded", function () {
         fetchLeaveRequests('PENDING');
     });
 });
+function toggleDropdown(event) {
+    event.preventDefault();
+
+    // Find the closest dropdown that was clicked (Finance or Leave)
+    const parentLi = event.target.closest(".finance-dropdown, .leave-dropdown");
+
+    if (!parentLi) return; // If clicked outside, do nothing
+
+    const dropdown = parentLi.querySelector(".dropdown-menu");
+
+    // Close other open dropdowns
+    document.querySelectorAll(".dropdown-menu.show").forEach(menu => {
+        if (menu !== dropdown) menu.classList.remove("show");
+    });
+
+    // Toggle visibility of clicked dropdown
+    dropdown.classList.toggle("show");
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function (event) {
+    if (!event.target.closest(".sidebar")) {
+        document.querySelectorAll(".dropdown-menu.show").forEach(menu => {
+            menu.classList.remove("show");
+        });
+    }
+});
+function validateInput(inputId, errorId, regex, errorMessage) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(errorId);
+
+    input.addEventListener('input', function() {
+        if (!regex.test(input.value)) {
+            input.classList.add('error-border');
+            error.style.display = 'block';
+            error.textContent = errorMessage;
+        } else {
+            input.classList.remove('error-border');
+            error.style.display = 'none';
+        }
+    });
+}
+
+// Name validation (at least 2 letters, no special characters)
+const nameRegex = /^[A-Za-z]{2,}$/;
+validateInput('firstName', 'firstNameError', nameRegex, "First name must be at least 2 letters and contain no special characters.");
+validateInput('surname', 'surnameError', nameRegex, "Surname must be at least 2 letters and contain no special characters.");
+validateInput('otherName', 'otherNameError', nameRegex, "Other name must be at least 2 letters and contain no special characters.");
+
+// Password validation
+const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+validateInput('password', 'passwordError', passwordRegex, "Password must be at least 8 characters, contain a number, and a special character.");
+
+
+
 
 
 
@@ -964,9 +1020,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAdminDashboardData();  // Load dashboard data
 });
 // Function to get the authorization token from localStorage
-function getAuthToken() {
-    return localStorage.getItem("accessToken");
-}
 
 // Function to check if the token is expired
 function isTokenExpired(token) {

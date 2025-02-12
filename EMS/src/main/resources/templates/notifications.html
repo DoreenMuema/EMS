@@ -21,12 +21,45 @@
             <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
             <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
-            <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
+
+            <!-- Finance Dropdown -->
+            <li class="finance-dropdown">
+                <a onclick="toggleDropdown(event)">
+                    <i class="fas fa-coins"></i> Finance
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/financeRequest" onclick="showFinanceTab('claims'); return false;">Claims</a></li>
+                    <li><a href="/financeRequest" onclick="showFinanceTab('requisitions'); return false;">Requisitions</a></li>
+
+                    <!-- Claims History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Claims History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('claim_history'); return false;">View Claims History</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Requisition History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Requisition History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('requisition_history'); return false;">View Requisition History</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </li>
+
             <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
+
 
     <!-- Main Content -->
     <div class="main">

@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNotifications();
 });
 
+
+
 // Function to get the authentication token
 function getAuthToken() {
     const token = localStorage.getItem("accessToken");
@@ -63,75 +65,115 @@ function getAuthToken() {
     }
     return token;
 }
+function toggleDropdown(event) {
+    event.preventDefault(); // Prevent navigation
+    const dropdown = event.target.closest(".finance-dropdown").querySelector(".dropdown-menu");
+    dropdown.classList.toggle("show"); // Toggle dropdown visibility
+}
 
-// Function to load financial requests
-function loadFinanceRequests(filter = {}) {
-    const { status, type } = filter;
 
-    // Construct the API URL dynamically based on the filters
-    let url = `${API_BASE_URL}/all-financeRequests`;
-
-    if (status) {
-        url = `${API_BASE_URL}/finance-requests/status/${status}`;
-    } else if (type) {
-        url = `${API_BASE_URL}/requests/type/${type}`;
-    }
-
-    fetch(url, {
+// Fetch and populate financial requests (claims or requisitions)
+function loadFinanceRequests(type) {
+    fetch(`${API_BASE_URL}/${type}`, {
+        method: "GET",
         headers: {
-            "Authorization": `Bearer ${getAuthToken()}`,
-        },
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getAuthToken()}`
+        }
     })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 401) {
-                    alert("Session expired. Please log in again.");
-                    window.location.href = "/home";
-                }
-                throw new Error(`Failed to load finance requests: ${response.statusText}`);
+        .then(response => response.json())
+        .then(data => {
+            if (type === "CLAIM") {
+                populateClaimsTable(data);
+            } else if (type === "REQUISITION") {
+                populateRequisitionsTable(data);
             }
-            return response.json();
         })
-        .then(requests => {
-            console.log("Fetched finance requests:", requests);
-            const tableBody = document.querySelector("#requestsTable tbody");
-            tableBody.innerHTML = ""; // Clear previous rows
+        .catch(error => console.error(`Error fetching ${type}:`, error));
+}
 
-            if (requests.length === 0) {
-                // Display a message if no requests are found
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center;">No requests found</td>
-                    </tr>
-                `;
-                return;
-            }
+// Function to populate Claims table
+function populateClaimsTable(claims) {
+    const tableBody = document.querySelector("#claimsTable tbody");
+    if (!tableBody) {
+        console.error("Claims table not found.");
+        return;
+    }
+    tableBody.innerHTML = ""; // Clear old data
 
-            // Populate the table with the fetched requests
-            requests.forEach(request => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${request.id}</td>
-                    <td>${request.employee.firstName} ${request.employee.surname}</td>
-                    <td>${request.itemDescription}</td>
-                    <td>${request.type || "N/A"}</td>
-                    <td>${request.status}</td>
-                    <td>
-                        ${request.proofFileUrl ?
-                    `<button class="download-btn" onclick="downloadProof(${request.id})">Download Proof</button>`
-                    : 'No proof file'}
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="approve-btn" onclick="approveRequest(${request.id}, ${request.employee.id})">Approve</button>
-                            <button class="reject-btn" onclick="rejectRequest(${request.id}, ${request.employee.id})">Reject</button>
-                        </div>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        })
-        .catch(error => console.error("Error loading finance requests:", error));
+    claims.forEach(claim => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${claim.id}</td>
+            <td>${claim.employeeName}</td>
+            <td>${claim.itemDescription}</td>
+            <td>${claim.amount}</td>
+            <td>${claim.status}</td>
+            <td><button onclick="downloadProof(${claim.id})">Download</button></td>
+            <td>
+                <button onclick="approveClaim(${claim.id})" class="approve-btn">Approve</button>
+                <button onclick="rejectClaim(${claim.id})" class="reject-btn">Reject</button>
+            </td>
+        `;
+
+        tableBody.appendChild(row);
+    });
+}
+
+// Function to populate Requisitions table
+function populateRequisitionsTable(requisitions) {
+    const tableBody = document.querySelector("#requisitionsTable tbody");
+    if (!tableBody) {
+        console.error("Requisitions table not found.");
+        return;
+    }
+    tableBody.innerHTML = ""; // Clear old data
+
+    requisitions.forEach(requisition => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${requisition.id}</td>
+            <td>${requisition.employeeName}</td>
+            <td>${requisition.itemDescription}</td>
+            <td>${requisition.amount}</td>
+            <td>${requisition.status}</td>
+            <td><button onclick="downloadProof(${requisition.id})">Download</button></td>
+            <td>
+                <button onclick="approveRequisition(${requisition.id})" class="approve-btn">Approve</button>
+                <button onclick="rejectRequisition(${requisition.id})" class="reject-btn">Reject</button>
+            </td>
+        `;
+
+        tableBody.appendChild(row);
+    });
+}
+
+
+// Populate table with data
+function populateTable(type, requests) {
+    const tableBody = document.querySelector(`#${type}Table tbody`);
+    tableBody.innerHTML = ""; // Clear previous data
+
+    requests.forEach(request => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${request.id}</td>
+            <td>${request.employeeName}</td>
+            <td>${request.itemDescription}</td>
+            <td>${request.amount}</td>
+            <td>${request.status}</td>
+            <td><button onclick="downloadProof(${request.id})">Download</button></td>
+            <td>
+                <button onclick="approveRequest(${request.id})" class="approve-btn">Approve</button>
+                <button onclick="rejectRequest(${request.id})" class="reject-btn">Reject</button>
+            </td>
+        `;
+
+        tableBody.appendChild(row);
+    });
 }
 
 // Function to download proof with token

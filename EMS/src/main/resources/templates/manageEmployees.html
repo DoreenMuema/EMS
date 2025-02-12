@@ -23,12 +23,46 @@
             <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
             <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
-            <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
+
+            <!-- Finance Dropdown -->
+            <li class="finance-dropdown">
+                <a onclick="toggleDropdown(event)">
+                    <i class="fas fa-coins"></i> Finance
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/financeRequest" onclick="showFinanceTab('claims'); return false;">Claims</a></li>
+                    <li><a href="/financeRequest" onclick="showFinanceTab('requisitions'); return false;">Requisitions</a></li>
+
+                    <!-- Claims History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Claims History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('claim_history'); return false;">View Claims History</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Requisition History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Requisition History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('requisition_history'); return false;">View Requisition History</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </li>
+
             <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
+
+
 
     <!-- Main Content -->
     <div class="main">
@@ -48,21 +82,21 @@
 
         <!-- Button to create a new employee -->
         <button id="createEmployeeBtn">Create New Employee</button>
-
-        <!-- Employee Form Modal (Create or Update Employee) -->
         <div id="employeeModal" class="modal">
             <div class="modal-content">
-
                 <h2 id="modalTitle">Create New Employee</h2>
                 <form id="employeeForm">
                     <label for="firstName">First Name:</label>
                     <input type="text" id="firstName" name="firstName" required>
+                    <div class="error" id="firstNameError">First name must be at least 2 letters and contain no special characters.</div>
 
                     <label for="surname">Surname:</label>
                     <input type="text" id="surname" name="surname" required>
+                    <div class="error" id="surnameError">Surname must be at least 2 letters and contain no special characters.</div>
 
                     <label for="otherName">Other Name:</label>
                     <input type="text" id="otherName" name="otherName">
+                    <div class="error" id="otherNameError">Other name must be at least 2 letters and contain no special characters.</div>
 
                     <label for="username">Username:</label>
                     <input type="text" id="username" name="username" required>
@@ -75,13 +109,13 @@
 
                     <!-- Password Field -->
                     <label for="password">Password:</label>
-
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password" required placeholder="Enter your password">
                         <span class="password-toggle-icon" onclick="togglePassword()">
                     <i class="fas fa-eye" id="eye-icon"></i>
                 </span>
-                    </div><br>
+                    </div>
+                    <div class="error" id="passwordError">Password must be at least 8 characters long, contain a number, and a special character.</div>
 
                     <label for="role">Role:</label>
                     <select id="role" name="role" required>
@@ -117,7 +151,6 @@
                         <option value="accounts">Accounts</option>
                         <option value="it">IT</option>
                         <option value="finance">Finance</option>
-
                     </select>
 
                     <label for="designation">Designation:</label>
@@ -132,10 +165,10 @@
 
                     <button type="submit" id="submitBtn">Create Employee</button>
                     <button type="button" id="closeModalBtn" class="cancel-button">Cancel</button>
-
                 </form>
             </div>
         </div>
+
 
         <!-- Employee Table -->
         <table id="employeeTable">

@@ -21,12 +21,45 @@
             <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
             <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
-            <li><a href="/financeRequest"><i class="fas fa-coins"></i> Finance</a></li>
+
+            <!-- Finance Dropdown -->
+            <li class="finance-dropdown">
+                <a onclick="toggleDropdown(event)">
+                    <i class="fas fa-coins"></i> Finance
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/financeRequest" onclick="showFinanceTab('claims'); return false;">Claims</a></li>
+                    <li><a href="/financeRequest" onclick="showFinanceTab('requisitions'); return false;">Requisitions</a></li>
+
+                    <!-- Claims History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Claims History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('claim_history'); return false;">View Claims History</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Requisition History Dropdown -->
+                    <li class="history-dropdown">
+                        <a onclick="toggleDropdown(event)">
+                            <i class="fas fa-history"></i> Requisition History
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/financeHistory" onclick="showFinanceTab('requisition_history'); return false;">View Requisition History</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </li>
+
             <li><a href="/manageTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
-            <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
+
 
     <!-- Main Content -->
     <div class="main">
@@ -38,55 +71,56 @@
                 <ul>
                     <li><a href="/notifications"><i class="fas fa-bell" id="notificationBell"></i></a></li>
                 </ul>
-
             </div>
         </div>
-        <!-- Dashboard Top Section -->
 
-
-        <!-- Main Content -->
-    <div class="content">
-        <h1>Finance Requests</h1>
-
-        <!-- Filters -->
-        <div class="filters">
-            <label for="requestStatus">Filter by Status:</label>
-            <select id="requestStatus">
-                <option value="">All</option>
-                <option value="PENDING">Pending</option>
-                <option value="APPROVED">Approved</option>
-                <option value="REJECTED">Rejected</option>
-            </select>
-
-            <label for="requestType">Filter by Type:</label>
-            <select id="requestType">
-                <option value="">All</option>
-                <option value="REQUISITION">Requisition</option>
-                <option value="CLAIM">Claim</option>
-            </select>
-
-            <button onclick="applyFilters()">Apply Filters</button>
+        <!-- Finance Tabs -->
+        <div class="finance-tabs">
+            <button onclick="showFinanceTab('claims')">Claims</button>
+            <button onclick="showFinanceTab('requisitions')">Requisitions</button>
         </div>
 
-        <!-- Requests Table -->
-        <table id="requestsTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Employee Name</th>
-                <th>Item Description</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Proof File</th>
-                <th>Description</th>
-                <th>Actions</th>
+        <!-- Claims Table -->
+        <div id="claimsSection" class="finance-section">
+            <h1>Claims</h1>
+            <table id="claimsTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee Name</th>
+                    <th>Item Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Proof File</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Claims data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
 
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Requests will be dynamically loaded here -->
-            </tbody>
-        </table>
+        <!-- Requisitions Table -->
+        <div id="requisitionsSection" class="finance-section" style="display: none;">
+            <h1>Requisitions</h1>
+            <table id="requisitionsTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee Name</th>
+                    <th>Item Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Proof File</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Requisitions data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

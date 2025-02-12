@@ -270,6 +270,52 @@ window.addEventListener('DOMContentLoaded', function() {
     const employeeId = getEmployeeId();  // Replace with the actual employeeId
     getUnreadFinanceNotifications(employeeId);  // Load finance notifications by default
 });
+// Function to validate names
+function validateName(inputId, errorId) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(errorId);
+    const regex = /^[A-Za-z]{2,}$/; // Only letters, minimum 2 characters
+
+    if (!regex.test(input.value)) {
+        error.style.display = "block";
+        input.style.border = "2px solid red";
+    } else {
+        error.style.display = "none";
+        input.style.border = "";
+    }
+}
+
+document.getElementById("firstName").addEventListener("input", () => validateName("firstName", "firstNameError"));
+document.getElementById("surname").addEventListener("input", () => validateName("surname", "surnameError"));
+document.getElementById("otherName").addEventListener("input", () => validateName("otherName", "otherNameError"));
+
+// Function to validate password
+function validatePassword() {
+    const password = document.getElementById("password");
+    const error = document.getElementById("passwordError");
+    const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$/;
+
+    if (!regex.test(password.value)) {
+        error.style.display = "block";
+        password.style.border = "2px solid red";
+    } else {
+        error.style.display = "none";
+        password.style.border = "";
+    }
+}
+
+document.getElementById("password").addEventListener("input", validatePassword);
+
+// Password validation for confirmation
+document.getElementById('changePasswordForm').addEventListener('submit', function(event) {
+    let newPassword = document.getElementById('newPassword').value;
+    let confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (newPassword !== confirmPassword) {
+        alert("New Password and Confirm Password do not match!");
+        event.preventDefault();
+    }
+});
 
 
 // Establish the WebSocket connection for the employee
@@ -856,6 +902,30 @@ function togglePassword(passwordFieldId = 'password', eyeIconId = 'eye-icon') {
         eyeIcon.classList.add('fa-eye');
     }
 }
+function toggleDropdown(event, dropdownClass) {
+    event.preventDefault(); // Prevent page reload
+
+    const dropdown = document.querySelector(`.${dropdownClass} .dropdown-menu`);
+
+    // Close all other dropdowns
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        if (menu !== dropdown) menu.classList.remove("show");
+    });
+
+    // Toggle the selected dropdown
+    dropdown.classList.toggle("show");
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function (event) {
+    if (!event.target.closest(".dropdown")) {
+        document.querySelectorAll(".dropdown-menu").forEach(menu => {
+            menu.classList.remove("show");
+        });
+    }
+});
+
+
 
 
 function logout() {
