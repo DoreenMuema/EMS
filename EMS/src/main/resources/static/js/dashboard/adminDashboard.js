@@ -1,3 +1,145 @@
+// Function to fetch and populate leave applications
+function fetchLeaveApplications(statuses, tableId) {
+    const token = getAuthToken(); // Get auth token
+
+    // Fetch data for each status and combine results
+    Promise.all(
+        statuses.map(status =>
+            fetch(`/api/admin/leaves/status/${status}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(leaves => ({ status, leaves })) // Return data with status
+        )
+    )
+        .then(results => {
+            const tbody = document.querySelector(`#${tableId}`);
+            if (!tbody) {
+                console.error(`Table body not found: #${tableId}`);
+                return;
+            }
+
+            tbody.innerHTML = ''; // Clear existing rows
+
+            let totalLeaves = 0;
+
+            results.forEach(({ status, leaves }) => {
+                console.log(`Fetched ${status} Leave Applications:`, leaves);
+                totalLeaves += leaves.length;
+
+                leaves.forEach(leave => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td>${leave.employeeFirstName} ${leave.employeeSurname}</td>
+                    <td>${leave.leaveType}</td>
+                    <td>${leave.startDate}</td>
+                    <td>${leave.endDate}</td>
+                    <td>${leave.status}</td>
+                    <td>
+                        ${getActionDropdown(status, leave.id)}
+                    </td>
+                `;
+
+                    // Add event listener for actions
+                    const actionDropdown = row.querySelector('.action-dropdown');
+                    if (actionDropdown) {
+                        actionDropdown.addEventListener('change', (event) => {
+                            const action = event.target.value;
+                            const leaveId = event.target.getAttribute('data-leave-id');
+                            handleAction(action, leaveId);
+                        });
+                    }
+
+                    tbody.appendChild(row);
+                });
+            });
+
+            if (totalLeaves === 0) {
+                tbody.innerHTML = `<tr><td colspan="6">No leave records available</td></tr>`;
+            }
+
+            console.log(`Updated tbody content for ${tableId}:`, tbody.innerHTML);
+        })
+        .catch(error => console.error(`Error fetching leave applications:`, error));
+}
+
+// Function to generate action dropdown based on status
+function getActionDropdown(status, leaveId) {
+    let options = "";
+
+    if (status === 'PENDING') {
+        options = `
+            <option value="">Select Action</option>
+            <option value="approve">✅ Approve</option>
+            <option value="reject">❌ Reject</option>
+        `;
+    } else if (status === 'APPROVED') {
+        options = `
+            <option value="">Select Action</option>
+            <option value="recall">🔄 Recall</option>
+        `;
+    } else {
+        return '--'; // No actions for rejected & recalled leaves
+    }
+
+    return `<select class="action-dropdown" data-leave-id="${leaveId}">${options}</select>`;
+}
+
+// Function to handle actions (approve, reject, recall)
+function handleAction(action, leaveId) {
+    if (!action || !leaveId) return;
+
+    let url;
+    switch (action) {
+        case 'approve':
+            url = `/api/admin/approve-leave/${leaveId}`;
+            break;
+        case 'reject':
+            url = `/api/admin/reject-leave/${leaveId}`;
+            break;
+        case 'recall':
+            url = `/api/admin/recall-leave/${leaveId}`;
+            break;
+        default:
+            return;
+    }
+
+    const token = getAuthToken(); // Get auth token
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => {
+            if (response.ok) {
+                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} success`);
+                // Refresh the appropriate tables
+                fetchLeaveApplications(['PENDING'], 'leave-table-body'); // Refresh pending table
+                fetchLeaveApplications(['APPROVED', 'RECALLED', 'REJECTED'], 'leave-history-body'); // Refresh history table
+            } else {
+                alert('Error performing action');
+            }
+        })
+        .catch(error => console.error('Error handling action:', error));
+}
+
+// Load data when page loads
+document.addEventListener("DOMContentLoaded", function () {
+    fetchLeaveApplications(['PENDING'], 'leave-table-body'); // Load pending leaves
+    fetchLeaveApplications(['APPROVED', 'RECALLED', 'REJECTED'], 'leave-history-body'); // Load history leaves
+});
 // Manage employees action
 const viewEmployeeBtn = document.getElementById("viewEmployeeBtn");
 if (viewEmployeeBtn) {
@@ -476,125 +618,9 @@ function deleteEmployee(id) {
     }
 }
 
-// Function to fetch leaves and populate the table
-function fetchLeaveApplications() {
-    const token = getAuthToken(); // Get the auth token
-    fetch('/api/admin/leaves', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(leaves => {
-            console.log('Fetched Leave Applications:', leaves); // Log the fetched data
-
-            const tbody = document.querySelector('#leave-table-body');
-
-            if (!tbody) {
-                console.error('tbody not found!');
-                return;
-            }
-
-            // Debugging the tbody content before populating
-            console.log('Current tbody content:', tbody.innerHTML);
-
-            tbody.innerHTML = ''; // Clear existing rows
-
-            // Check if leaves array is empty
-            if (leaves.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No leave requests available</td></tr>';
-                return;
-            }
-
-            // Loop through each leave and create a row for it
-            leaves.forEach(leave => {
-                const row = document.createElement('tr');
-
-                // Populate table columns (ensure property names match the fetched data)
-                row.innerHTML = `
-                <td>${leave.employeeFirstName} ${leave.employeeSurname}</td>
-                <td>${leave.leaveType}</td>
-                <td>${leave.startDate}</td>
-                <td>${leave.endDate}</td>
-                <td>${leave.status}</td>
-                <td>
-                    <select class="action-dropdown" data-leave-id="${leave.id}">
-                        <option value="">Select Action</option>
-                        <option value="approve" class="button-option approve">Approve</option>
-                        <option value="reject" class="button-option reject">Reject</option>
-                        <option value="recall" class="button-option recall">Recall</option>
-                    </select>
-                </td>
-            `;
-
-                // Set the default selected value for the action dropdown to empty
-                const actionDropdown = row.querySelector('.action-dropdown');
-                actionDropdown.value = ""; // Ensure "Select Action" is selected by default
-
-                // Add event listener for action dropdown
-                actionDropdown.addEventListener('change', (event) => {
-                    const action = event.target.value;
-                    const leaveId = event.target.getAttribute('data-leave-id');
-                    handleAction(action, leaveId);
-                });
-
-                tbody.appendChild(row);
-            });
-
-            // Debugging after rows are added
-            console.log('Updated tbody content:', tbody.innerHTML);
-        })
-        .catch(error => console.error('Error fetching leave applications:', error));
-}
-
-// Call fetchLeaveApplications when the page is loaded
-window.onload = function() {
-    fetchLeaveApplications(); // Fetch the leave applications when the page is loaded
-};
-
-// Function to handle action (approve, reject, recall)
-function handleAction(action, leaveId) {
-    if (!action || !leaveId) return;
-
-    let url;
-    switch (action) {
-        case 'approve':
-            url = `/api/admin/approve-leave/${leaveId}`; // Replace with your actual endpoint
-            break;
-        case 'reject':
-            url = `/api/admin/reject-leave/${leaveId}`; // Replace with your actual endpoint
-            break;
-        case 'recall':
-            url = `/api/admin/recall-leave/${leaveId}`; // Replace with your actual endpoint
-            break;
-        default:
-            return;
-    }
-    const token = getAuthToken(); // Get the auth token
-
-    fetch(url, {
-
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => {
-            if (response.ok) {
-                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} success`);
-                fetchLeaveApplications(); // Refresh the table after action
-            } else {
-                alert('Error performing action');
-            }
-        })
-        .catch(error => console.error('Error handling action:', error));
-}
 
 // Call the function to populate the table initially
-fetchLeaveApplications();
+
 document.querySelectorAll('.action-dropdown').forEach(dropdown => {
     dropdown.addEventListener('change', function() {
         const action = this.value;
@@ -648,7 +674,7 @@ function fetchFinanceRequests() {
     fetch('/leaves/status/PENDING', {
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer YOUR_JWT_TOKEN' // Replace with actual token
+            'Authorization': `Bearer ${getAuthToken()}`,
         }
     })
         .then(response => {
@@ -990,12 +1016,6 @@ const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
 validateInput('password', 'passwordError', passwordRegex, "Password must be at least 8 characters, contain a number, and a special character.");
 
 
-
-
-
-
-
-
 function logout() {
     // Clear user data from localStorage
     localStorage.removeItem("accessToken");
@@ -1019,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchEmployeeData();  // Load employee data
     fetchAdminDashboardData();  // Load dashboard data
 });
-// Function to get the authorization token from localStorage
+
 
 // Function to check if the token is expired
 function isTokenExpired(token) {

@@ -74,6 +74,7 @@ public class SecurityConfig {
                                 "/manageEmployees",
                                 "/adminDashboard",
                                 "/employeeDashboard",
+                                "/leavesHistory",
                                 "/login",
                                 "/uploads/**",
                                 "/js/**",

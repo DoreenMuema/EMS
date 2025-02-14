@@ -20,7 +20,17 @@
         <ul>
             <li><a href="/adminDashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="/manageEmployees"><i class="fas fa-user"></i> Employees</a></li>
-            <li><a href="/manageLeaves"><i class="fas fa-envelope"></i> Leave Requests</a></li>
+
+            <!-- Leave Requests Dropdown -->
+            <li class="leave-dropdown">
+                <a onclick="toggleDropdown(event)">
+                    <i class="fas fa-envelope"></i> Leave Requests
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="/manageLeaves">Leave Applications</a></li>
+                    <li><a href="/leavesHistory">Leave History</a></li>
+                </ul>
+            </li>
 
             <!-- Finance Dropdown -->
             <li class="finance-dropdown">
@@ -28,28 +38,11 @@
                     <i class="fas fa-coins"></i> Finance
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a href="/financeRequest" onclick="showFinanceTab('claims'); return false;">Claims</a></li>
-                    <li><a href="/financeRequest" onclick="showFinanceTab('requisitions'); return false;">Requisitions</a></li>
+                    <li><a href="/financeRequest?section=claims">Claims</a></li>
+                    <li><a href="/financeRequest?section=requisitions">Requisitions</a></li>
+                    <li><a href="/financeRequest?section=claimsHistory">View Claims History</a></li>
+                    <li><a href="/financeRequest?section=requisitionsHistory">View Requisition History</a></li>
 
-                    <!-- Claims History Dropdown -->
-                    <li class="history-dropdown">
-                        <a onclick="toggleDropdown(event)">
-                            <i class="fas fa-history"></i> Claims History
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/financeHistory" onclick="showFinanceTab('claim_history'); return false;">View Claims History</a></li>
-                        </ul>
-                    </li>
-
-                    <!-- Requisition History Dropdown -->
-                    <li class="history-dropdown">
-                        <a onclick="toggleDropdown(event)">
-                            <i class="fas fa-history"></i> Requisition History
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/financeHistory" onclick="showFinanceTab('requisition_history'); return false;">View Requisition History</a></li>
-                        </ul>
-                    </li>
 
                 </ul>
             </li>
@@ -74,12 +67,6 @@
             </div>
         </div>
 
-        <!-- Finance Tabs -->
-        <div class="finance-tabs">
-            <button onclick="showFinanceTab('claims')">Claims</button>
-            <button onclick="showFinanceTab('requisitions')">Requisitions</button>
-        </div>
-
         <!-- Claims Table -->
         <div id="claimsSection" class="finance-section">
             <h1>Claims</h1>
@@ -95,7 +82,7 @@
                     <th>Actions</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody id="claimTableBody">
                 <!-- Claims data will be dynamically inserted here -->
                 </tbody>
             </table>
@@ -112,15 +99,58 @@
                     <th>Item Description</th>
                     <th>Amount</th>
                     <th>Status</th>
-                    <th>Proof File</th>
+                    <th>Descriptions</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody id="requisitionTableBody">
                 <!-- Requisitions data will be dynamically inserted here -->
                 </tbody>
             </table>
         </div>
+
+        <!-- Claims History Table -->
+        <div id="claimsHistorySection" class="finance-section" style="display: none;">
+            <h1>Claims History</h1>
+            <table id="claimsHistoryTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee Name</th>
+                    <th>Item Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Proof File</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="claimsHistoryTableBody">
+                <!-- Claims history data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Requisitions History Table -->
+        <div id="requisitionsHistorySection" class="finance-section" style="display: none;">
+            <h1>Requisitions History</h1>
+            <table id="requisitionsHistoryTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee Name</th>
+                    <th>Item Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Descriptions</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="requisitionsHistoryTableBody">
+                <!-- Requisitions history data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+
     </div>
 </div>
 

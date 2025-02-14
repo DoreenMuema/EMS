@@ -1,174 +1,152 @@
-const API_BASE_URL = "/api/admin"; // Replace with your actual API base URL
+const API_BASE_URL = "/api/admin"; // Replace with actual API URL
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize notification variables
-    let notificationCount = 0; // Track number of new notifications
-    let notifications = []; // List of notifications
+function getAuthToken() {
+    return localStorage.getItem('accessToken');
+}
 
-    // Function to display notifications in the sidebar
-    function updateNotifications() {
-        const notificationsList = document.getElementById('notificationsList');
-        if (!notificationsList) {
-            console.warn('Notifications list element not found!');
-            return; // Ensure notificationsList exists
-        }
-        notificationsList.innerHTML = ''; // Clear current notifications
-
-        // Add each notification to the list
-        notifications.forEach(notification => {
-            const li = document.createElement('li');
-            li.textContent = notification.message;
-            notificationsList.appendChild(li);
-        });
-
-        // Update notification bell icon if there are new notifications
-        const notificationBell = document.getElementById('notificationBell');
-        if (notificationBell) {
-            if (notificationCount > 0) {
-                notificationBell.classList.add('new-notification');
-            } else {
-                notificationBell.classList.remove('new-notification');
-            }
-        } else {
-            console.warn('Notification bell element not found!');
-        }
-    }
-
-    // Simulate receiving a new notification
-    function receiveNewNotification(message) {
-        notifications.push({ message });
-        notificationCount++;
-        updateNotifications();
-    }
-
-    // Simulate calling this function when a new leave application is submitted
-    function sendLeaveApplicationNotification() {
-        // Simulate sending a notification to admin and employee
-        receiveNewNotification('New leave application submitted.');
-    }
-
-    // Simulate calling this function to show an example notification
-    sendLeaveApplicationNotification();
-
-    // Update notifications on page load
-    updateNotifications();
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get("section") || "claims"; // Default to 'claims'
+    showSection(section);
 });
 
+function showSection(section) {
+    document.querySelectorAll('.finance-section').forEach(sec => sec.style.display = 'none');
+    document.getElementById(`${section}Section`).style.display = 'block';
 
+    if (section === 'claims') fetchClaims();
+    else if (section === 'requisitions') fetchRequisitions();
 
-// Function to get the authentication token
-function getAuthToken() {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-        alert("Unauthorized access. Please log in again.");
-        window.location.href = "/login"; // Redirect to login if no token
+}
+
+async function fetchData(endpoint, callback) {
+    try {
+        const token = getAuthToken();
+        if (!token) throw new Error("No auth token found");
+
+        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        const data = await response.json();
+        callback(data);
+    } catch (error) {
+        console.error(`Error fetching ${endpoint}:`, error);
+        alert(`Error fetching ${endpoint}. Check console for details.`);
     }
-    return token;
 }
-function toggleDropdown(event) {
-    event.preventDefault(); // Prevent navigation
-    const dropdown = event.target.closest(".finance-dropdown").querySelector(".dropdown-menu");
-    dropdown.classList.toggle("show"); // Toggle dropdown visibility
+
+function fetchClaims() { fetchData("requests/type/CLAIM", populateClaimsTable); }
+function fetchRequisitions() { fetchData("requests/type/REQUISITION", populateRequisitionsTable); }
+
+
+function populateTable(data, tableBodyId) {
+    const tableBody = document.getElementById(tableBodyId);
+    tableBody.innerHTML = data.length ? data.map(rowTemplate).join('') : "<tr><td colspan='7'>No data found.</td></tr>";
+}
+
+function rowTemplate(request) {
+    const isClaim = request.type === "CLAIM"; // Check if it's a claim request
+
+    return `
+        <tr>
+            <td>${request.id}</td>
+            <td>${request.employee?.name || 'N/A'}</td>
+            <td>${request.itemDescription}</td>
+            <td>${request.amount}</td>
+            <td>${request.status}</td>
+
+            ${isClaim ? `
+            <td>
+                <button onclick="downloadProof(${request.id})" class="download-btn">Download Proof</button>
+            </td>` : `<td>${request.description || 'N/A'}</td>`}
+
+            <td>
+                <button onclick="handleRequest(${request.id}, 'approve')" class="approve-btn">Approve</button>
+                <button onclick="handleRequest(${request.id}, 'reject')" class="reject-btn">Reject</button>
+            </td>
+        </tr>`;
+}
+// Function to fetch approved/rejected claims and requisitions
+async function fetchHistoryData() {
+    try {
+        const token = getAuthToken();
+        if (!token) throw new Error("No auth token found");
+
+        const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
+
+        // Fetch all history data concurrently
+        const endpoints = [
+            { url: "finance-requests/status/APPROVED", key: "approvedClaims" },
+            { url: "finance-requests/status/REJECTED", key: "rejectedClaims" },
+            { url: "finance-requests/status/APPROVED", key: "approvedRequisitions" },
+            { url: "finance-requests/status/REJECTED", key: "rejectedRequisitions" },
+        ];
+
+        // Create an array of fetch promises
+        const fetchPromises = endpoints.map(endpoint =>
+            fetch(`${API_BASE_URL}/${endpoint.url}`, { method: "GET", headers })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Error fetching ${endpoint.url} - Status: ${response.status}`);
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error(`Failed to fetch ${endpoint.url}:`, error);
+                    return []; // Return empty array on failure
+                })
+        );
+
+        // Wait for all requests to complete
+        const [approvedClaims, rejectedClaims, approvedRequisitions, rejectedRequisitions] = await Promise.all(fetchPromises);
+
+        // Merge approved and rejected results
+        const claimsHistory = [...approvedClaims, ...rejectedClaims];
+        const requisitionsHistory = [...approvedRequisitions, ...rejectedRequisitions];
+
+        // Populate tables
+        populateHistoryTable("claimsHistoryTableBody", claimsHistory, true);
+        populateHistoryTable("requisitionsHistoryTableBody", requisitionsHistory, false);
+
+    } catch (error) {
+        console.error("Error fetching history data:", error);
+        alert("Failed to load history data. Please try again.");
+    }
 }
 
 
-// Fetch and populate financial requests (claims or requisitions)
-function loadFinanceRequests(type) {
-    fetch(`${API_BASE_URL}/${type}`, {
+// Function to include authorization headers in API requests
+function getAuthHeaders() {
+    return {
         method: "GET",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getAuthToken()}`
+            "Authorization": "Bearer " + localStorage.getItem("accessToken"), // Ensure token is valid
+            "Content-Type": "application/json"
         }
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (type === "CLAIM") {
-                populateClaimsTable(data);
-            } else if (type === "REQUISITION") {
-                populateRequisitionsTable(data);
-            }
-        })
-        .catch(error => console.error(`Error fetching ${type}:`, error));
+    };
 }
 
-// Function to populate Claims table
-function populateClaimsTable(claims) {
-    const tableBody = document.querySelector("#claimsTable tbody");
-    if (!tableBody) {
-        console.error("Claims table not found.");
-        return;
-    }
-    tableBody.innerHTML = ""; // Clear old data
-
-    claims.forEach(claim => {
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-            <td>${claim.id}</td>
-            <td>${claim.employeeName}</td>
-            <td>${claim.itemDescription}</td>
-            <td>${claim.amount}</td>
-            <td>${claim.status}</td>
-            <td><button onclick="downloadProof(${claim.id})">Download</button></td>
-            <td>
-                <button onclick="approveClaim(${claim.id})" class="approve-btn">Approve</button>
-                <button onclick="rejectClaim(${claim.id})" class="reject-btn">Reject</button>
-            </td>
-        `;
-
-        tableBody.appendChild(row);
-    });
-}
-
-// Function to populate Requisitions table
-function populateRequisitionsTable(requisitions) {
-    const tableBody = document.querySelector("#requisitionsTable tbody");
-    if (!tableBody) {
-        console.error("Requisitions table not found.");
-        return;
-    }
-    tableBody.innerHTML = ""; // Clear old data
-
-    requisitions.forEach(requisition => {
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-            <td>${requisition.id}</td>
-            <td>${requisition.employeeName}</td>
-            <td>${requisition.itemDescription}</td>
-            <td>${requisition.amount}</td>
-            <td>${requisition.status}</td>
-            <td><button onclick="downloadProof(${requisition.id})">Download</button></td>
-            <td>
-                <button onclick="approveRequisition(${requisition.id})" class="approve-btn">Approve</button>
-                <button onclick="rejectRequisition(${requisition.id})" class="reject-btn">Reject</button>
-            </td>
-        `;
-
-        tableBody.appendChild(row);
-    });
-}
-
-
-// Populate table with data
-function populateTable(type, requests) {
-    const tableBody = document.querySelector(`#${type}Table tbody`);
-    tableBody.innerHTML = ""; // Clear previous data
+// Function to populate history tables
+function populateHistoryTable(tableId, requests, isClaim) {
+    const tableBody = document.getElementById(tableId);
+    tableBody.innerHTML = ""; // Clear existing data
 
     requests.forEach(request => {
         const row = document.createElement("tr");
 
         row.innerHTML = `
             <td>${request.id}</td>
-            <td>${request.employeeName}</td>
+            <td>${request.employee?.name || "N/A"}</td>
             <td>${request.itemDescription}</td>
             <td>${request.amount}</td>
             <td>${request.status}</td>
-            <td><button onclick="downloadProof(${request.id})">Download</button></td>
+            ${isClaim
+            ? `<td><button onclick="downloadProof(${request.id})" class="download-btn">Download Proof</button></td>`
+            : `<td>${request.description || "N/A"}</td>`}
             <td>
-                <button onclick="approveRequest(${request.id})" class="approve-btn">Approve</button>
-                <button onclick="rejectRequest(${request.id})" class="reject-btn">Reject</button>
+                <button onclick="viewDetails(${request.id})" class="details-btn">View Details</button>
             </td>
         `;
 
@@ -176,6 +154,8 @@ function populateTable(type, requests) {
     });
 }
 
+// Fetch and populate data when the page loads
+document.addEventListener("DOMContentLoaded", fetchHistoryData);
 // Function to download proof with token
 function downloadProof(requestId) {
     const token = getAuthToken(); // Retrieve token from localStorage
@@ -214,75 +194,40 @@ function downloadProof(requestId) {
 }
 
 
-// Function to approve a financial request
-function approveRequest(requestId, employeeId) {
-    fetch(`${API_BASE_URL}/requests/${requestId}/approve`, {
-        method: "PATCH",
-        headers: {
-            "Authorization": `Bearer ${getAuthToken()}`,
-            "X-Employee-ID": employeeId, // Use the employeeId from the request data
-            "Content-Type": "application/json",
-        },
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Failed to approve request");
+
+function populateClaimsTable(data) { populateTable(data, "claimTableBody"); }
+function populateRequisitionsTable(data) { populateTable(data, "requisitionTableBody"); }
+
+async function handleRequest(id, action) {
+    const confirmAction = confirm(`Are you sure you want to ${action} request ID ${id}?`);
+    if (!confirmAction) return;
+
+    try {
+        const token = getAuthToken();
+        if (!token) throw new Error("No auth token found");
+
+        const response = await fetch(`${API_BASE_URL}/requests/${id}/${action}`, {
+            method: "PATCH",  // Change from POST to PATCH
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
             }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message || "Request approved successfully.");
-            loadFinanceRequests(); // Reload the table
-        })
-        .catch(error => console.error("Error approving request:", error));
-}
+        });
 
-// Function to reject a financial request
-function rejectRequest(requestId, employeeId) {
-    fetch(`${API_BASE_URL}/requests/${requestId}/reject`, {
-        method: "PATCH",
-        headers: {
-            "Authorization": `Bearer ${getAuthToken()}`,
-            "X-Employee-ID": employeeId, // Use the employeeId from the request data
-            "Content-Type": "application/json",
-        },
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Failed to reject request");
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message || "Request rejected successfully.");
-            loadFinanceRequests(); // Reload the table
-        })
-        .catch(error => console.error("Error rejecting request:", error));
-}
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+        }
 
-// Apply filters to fetch filtered requests
-function applyFilters() {
-    const status = document.getElementById("requestStatus").value;
-    const type = document.getElementById("requestType").value;
+        const result = await response.json();
+        alert(`Request ${id} successfully ${action}d!`);
 
-    loadFinanceRequests({ status, type });
-}
-
-// Load requests on page load
-window.addEventListener("DOMContentLoaded", () => {
-    loadFinanceRequests(); // Load all requests initially
-
-    // Attach event listener to the filter button
-    document.querySelector("button").addEventListener("click", applyFilters);
-});
-
-// Logout function
-function logout() {
-    // Clear user data from localStorage
-    localStorage.removeItem("accessToken");
-
-    // Redirect to the home page
-    window.location.href = "/";
+        // Refresh the page to update the table
+        location.reload();
+    } catch (error) {
+        console.error(`Error ${action}ing request ${id}:`, error);
+        alert(`Failed to ${action} request ID ${id}. Check console for details.`);
+    }
 }
 
 // Attach the logout function to the logout link
@@ -290,5 +235,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoutLink = document.querySelector("a[href='#']");
     if (logoutLink) {
         logoutLink.addEventListener("click", logout);
+    }
+});
+
+
+
+// Function to check if the token is expired
+function isTokenExpired(token) {
+    if (!token) return true; // If no token exists, consider it expired
+
+    // Decode the JWT token
+    const decodedToken = decodeJwt(token);
+
+    // Get the current time in seconds
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    // Check if the token has expired by comparing the expiration time with the current time
+    return decodedToken.exp < currentTime;
+}
+
+// Decode the JWT token
+function decodeJwt(token) {
+    const base64Url = token.split('.')[1]; // Get the payload part of the JWT
+    const base64 = base64Url.replace('-', '+').replace('_', '/'); // Fix URL encoding
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// Redirect to home.html if the token is expired on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const token = getAuthToken();
+
+    if (isTokenExpired(token)) {
+        console.log('Token expired. Redirecting to home.html...');
+
+        // Show an alert message to the user
+        alert('Session expired. Please log in again.');
+
+        // Redirect after a brief moment (you can adjust the delay if needed)
+        setTimeout(() => {
+            window.location.href = '/'; // Redirect to home.html
+        }, 2000); // Delay the redirect by 2 seconds
+    } else {
+        console.log('Token is valid.');
     }
 });

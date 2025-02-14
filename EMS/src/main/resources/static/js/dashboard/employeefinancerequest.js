@@ -93,45 +93,60 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.warn('Finance requests table or required data not found!');
     }
-// Modal and form handling
+
+    //modals
     const newClaimRequestButton = document.getElementById('newClaimRequestButton');
     const newRequisitionRequestButton = document.getElementById('newRequisitionRequestButton');
     const claimModal = document.getElementById('claimModal');
     const requisitionModal = document.getElementById('requisitionModal');
     const createClaimForm = document.getElementById('createClaimForm');
     const createRequisitionForm = document.getElementById('createRequisitionForm');
+    const applyClaimLink = document.querySelector('a[href="/employeefinanceRequest?section=applyClaim"]');
+    const applyRequisitionLink = document.querySelector('a[href="/employeefinanceRequest?section=applyRequisition"]');
+
+// Function to open claim modal
+    function openClaimModal(event) {
+        event.preventDefault();  // Prevent link from navigating
+        event.stopPropagation(); // Stop event bubbling
+        if (claimModal) {
+            console.log("Opening claim request modal...");
+            claimModal.style.display = 'block';
+        }
+    }
+
+// Function to open requisition modal
+    function openRequisitionModal(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (requisitionModal) {
+            console.log("Opening requisition request modal...");
+            requisitionModal.style.display = 'block';
+        }
+    }
+
+// Event listener for Apply Claim link
+    if (applyClaimLink) {
+        applyClaimLink.addEventListener("click", openClaimModal);
+    }
+
+// Event listener for Apply Requisition link
+    if (applyRequisitionLink) {
+        applyRequisitionLink.addEventListener("click", openRequisitionModal);
+    }
+
+// Open claim request modal when button is clicked
+    if (newClaimRequestButton) {
+        newClaimRequestButton.addEventListener('click', openClaimModal);
+    }
+
+// Open requisition request modal when button is clicked
+    if (newRequisitionRequestButton) {
+        newRequisitionRequestButton.addEventListener('click', openRequisitionModal);
+    }
 
 // Cancel buttons
     const cancelClaimRequestBtn = document.getElementById('cancelClaimRequestBtn');
     const cancelRequisitionRequestBtn = document.getElementById('cancelRequisitionRequestBtn');
-
-// Open claim request modal
-    if (newClaimRequestButton && claimModal) {
-        newClaimRequestButton.addEventListener('click', () => {
-            console.log('Opening claim request modal...');
-            claimModal.style.display = 'block';
-        });
-    }
-
-// Open requisition request modal
-    if (newRequisitionRequestButton && requisitionModal) {
-        newRequisitionRequestButton.addEventListener('click', () => {
-            console.log('Opening requisition request modal...');
-            requisitionModal.style.display = 'block';
-        });
-    }
-
-// Close modals when clicking outside
-    window.addEventListener('click', event => {
-        if (event.target === claimModal) {
-            console.log('Closing claim request modal...');
-            claimModal.style.display = 'none';
-        }
-        if (event.target === requisitionModal) {
-            console.log('Closing requisition request modal...');
-            requisitionModal.style.display = 'none';
-        }
-    });
 
 // Close claim request modal when "Cancel" is clicked
     if (cancelClaimRequestBtn) {
@@ -149,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close modal when clicking outside
+// Close modals when clicking outside
     window.addEventListener('click', event => {
         if (event.target === claimModal) {
             console.log('Closing claim request modal...');
@@ -160,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             requisitionModal.style.display = 'none';
         }
     });
+
 
 
 // Function to generate the proof file URL
@@ -350,6 +366,153 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Disabled past dates for requisitions');
     }
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const financeHistoryLink = document.querySelector('a[href="/employeefinanceRequest?section=FinanceHistory"]');
+    const financeHistorySection = document.getElementById('financeHistorySection');
+    const financeRequestsSection = document.getElementById('financeRequestsSection'); // The finance request table
+    const financeHistoryTable = document.getElementById('financeHistoryRequestsTable');
+    const financeHistoryBody = financeHistoryTable.querySelector('tbody');
+
+    if (financeHistoryLink) {
+        financeHistoryLink.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default behavior
+            window.location.href = '/employeefinanceRequest?section=FinanceHistory'; // Redirect with query param
+        });
+    }
+
+    // Check URL for "FinanceHistory" section on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('section') === 'FinanceHistory') {
+        showFinanceHistory();
+    }
+});
+
+// Function to show only Finance History and hide other sections
+function showFinanceHistory() {
+    const financeHistorySection = document.getElementById('financeHistorySection');
+    const financeRequestsSection = document.getElementById('financeRequestsSection'); // The finance request table
+    const financeHistoryTable = document.getElementById('financeHistoryRequestsTable');
+    const financeHistoryBody = financeHistoryTable.querySelector('tbody');
+
+    // Hide the finance request section
+    if (financeRequestsSection) {
+        financeRequestsSection.style.display = 'none';
+    }
+
+    // Show the finance history section
+    financeHistorySection.style.display = 'block';
+    financeHistoryTable.style.display = 'table';
+
+    // Fetch finance history data
+    loadFinanceHistory();
+
+    // Scroll to the finance history section for better UX
+    financeHistorySection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Function to fetch and display finance history
+function loadFinanceHistory() {
+    const financeHistorySection = document.getElementById('financeHistorySection');
+    const financeHistoryTable = document.getElementById('financeHistoryRequestsTable');
+    const financeHistoryBody = financeHistoryTable.querySelector('tbody');
+
+    const employeeId = getEmployeeId(); // Get employee ID
+    if (!employeeId) {
+        alert("Employee ID is missing.");
+        return;
+    }
+
+    Promise.all([
+        fetchRequestsByStatus('APPROVED', employeeId),
+        fetchRequestsByStatus('REJECTED', employeeId)
+    ])
+        .then(([approvedRequests, rejectedRequests]) => {
+            financeHistoryBody.innerHTML = ''; // Clear previous entries
+
+            if (approvedRequests.length === 0 && rejectedRequests.length === 0) {
+                alert('No approved or rejected finance history found.');
+                financeHistorySection.style.display = 'none';
+                return;
+            }
+
+            const allRequests = [...approvedRequests, ...rejectedRequests];
+            allRequests.forEach(request => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td>${request.id}</td>
+                <td>${request.itemDescription}</td>
+                <td>${request.amount}</td>
+                <td>${request.status}</td>
+                <td>${request.type}</td>
+                <td>${request.description}</td>
+                <td><a href="${request.proofFileUrl}" target="_blank">View File</a></td>
+                <td>${request.claimDate || 'N/A'}</td>
+                <td>${request.requisitionDate || 'N/A'}</td>
+                <td>${request.createdDate}</td>
+            `;
+                financeHistoryBody.appendChild(row);
+            });
+
+            // Show finance history table
+            financeHistorySection.style.display = 'block';
+            financeHistoryTable.style.display = 'table';
+        })
+        .catch(error => {
+            console.error('Error fetching finance history:', error);
+            alert('Failed to load finance history. Please try again.');
+        });
+}
+
+
+
+// Function to fetch financial requests by status
+function fetchRequestsByStatus(status, employeeId) {
+    const accessToken = getAuthToken(); // Retrieve token dynamically
+    if (!accessToken) {
+        console.error("Access token is missing. User may need to log in.");
+        alert("Session expired. Please log in again.");
+        return Promise.resolve([]);
+    }
+
+    return fetch(`/api/finance-requests/status/${status}/${employeeId}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            return response.json();
+        })
+        .catch(error => {
+            console.error(`Error fetching ${status} requests:`, error);
+            return [];
+        });
+}
+
+function toggleDropdown(event, dropdownClass) {
+    event.preventDefault(); // Prevent page reload
+
+    const dropdown = document.querySelector(`.${dropdownClass} .dropdown-menu`);
+
+    // Close all other dropdowns
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        if (menu !== dropdown) menu.classList.remove("show");
+    });
+
+    // Toggle the selected dropdown
+    dropdown.classList.toggle("show");
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function (event) {
+    if (!event.target.closest(".dropdown")) {
+        document.querySelectorAll(".dropdown-menu").forEach(menu => {
+            menu.classList.remove("show");
+        });
+    }
+});
+
+
 function logout() {
     // Clear user data from localStorage
     localStorage.removeItem("accessToken");

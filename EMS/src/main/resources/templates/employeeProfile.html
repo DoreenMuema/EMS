@@ -26,28 +26,31 @@
                     <i class="fas fa-envelope"></i> Leave Requests
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a href="/applyForLeave">Apply for Leave</a></li>
-                    <li><a href="/leaveHistory">Leave History</a></li>
+                    <li><a href="/employeeLeaveApplication?section=applyleave">Apply for Leave</a></li>
+                    <li><a href="/employeeLeaveApplication?section=leaveHistory">Leave History</a></li>
                 </ul>
             </li>
 
-            <!-- Finance Dropdown -->
+
             <li class="dropdown finance-dropdown">
                 <a href="#" onclick="toggleDropdown(event, 'finance-dropdown')">
                     <i class="fas fa-coins"></i> Finance
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a href="/applyForClaim">Apply for Claim</a></li>
-                    <li><a href="/applyForRequisition">Apply for Requisition</a></li>
-                    <li><a href="/financeHistory">Finance History</a></li>
+                    <li><a href="/employeefinanceRequest?section=applyClaim">Apply for Claim</a></li>
+                    <li><a href="/employeefinanceRequest?section=applyRequisition">Apply for Requisition</a></li>
+                    <li><a href="/employeefinanceRequest?section=leavesHistory">Finance History</a></li>
                 </ul>
             </li>
+
 
             <li><a href="/employeeTasks"><i class="fas fa-tasks"></i> Tasks</a></li>
             <li><a href="/employeeNotifications"><i class="fas fa-bell"></i> Notifications</a></li>
             <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
+
+
 
     <!-- Main Content -->
     <div class="main">

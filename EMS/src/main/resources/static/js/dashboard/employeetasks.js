@@ -188,6 +188,19 @@ function closePopup() {
     document.getElementById("taskDetailsPopup").classList.add("hidden");
 }
 
+function toggleDropdown(event, dropdownClass) {
+    event.preventDefault(); // Prevent page reload
+
+    const dropdown = document.querySelector(`.${dropdownClass} .dropdown-menu`);
+
+    // Close all other dropdowns
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        if (menu !== dropdown) menu.classList.remove("show");
+    });
+
+    // Toggle the selected dropdown
+    dropdown.classList.toggle("show");
+}
 
 
 // Mark a task as completed

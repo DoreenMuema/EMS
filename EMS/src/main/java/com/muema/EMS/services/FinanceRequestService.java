@@ -69,4 +69,9 @@ public class FinanceRequestService {
             throw new RuntimeException("Failed to fetch financial requests: " + e.getMessage(), e);
         }
     }
+
+    public List<FinancialRequest> getFinancialRequestsByStatusAndEmployeeId(String status, Long employeeId) {
+        return financeRequestRepository.findByStatusAndEmployeeId(status.toUpperCase(), employeeId);
+    }
+
 }

@@ -2059,12 +2059,6 @@ h2 {
     background: #f0f0f0;
 }
 
-/* Ensure Sidebar Doesn't Hide Dropdown */
-.sidebar {
-    position: relative;
-    z-index: 10;
-    overflow: visible !important;
-}
 
 .error {
     color: red;

@@ -349,6 +349,41 @@ public class EmployeeController {
                     .body(Map.of("error", "An error occurred: " + e.getMessage()));
         }
     }
+    @GetMapping("/employee/leaves/status/{status}")
+    @Secured({"ROLE_EMPLOYEE", "ROLE_ADMIN"})
+    public ResponseEntity<Object> getLeavesByStatus(@PathVariable String status) {
+        try {
+            // Fetch leave applications by status
+            List<LeaveApplication> leaveApplications = leaveService.getLeavesByStatus(status.toUpperCase());
+
+            if (leaveApplications.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "No leave applications found with status: " + status));
+            }
+
+            // Prepare response with leave details
+            List<Map<String, Object>> response = leaveApplications.stream()
+                    .map(leave -> {
+                        Map<String, Object> leaveDetails = new HashMap<>();
+                        leaveDetails.put("id", leave.getId());
+                        leaveDetails.put("employeeId", leave.getEmployee().getId());
+                        leaveDetails.put("leaveType", leave.getLeaveType());
+                        leaveDetails.put("days", leave.getDays());
+                        leaveDetails.put("startDate", leave.getStartDate());
+                        leaveDetails.put("endDate", leave.getEndDate());
+                        leaveDetails.put("status", leave.getStatus());
+                        leaveDetails.put("dateRequested", leave.getDateRequested());
+                        return leaveDetails;
+                    })
+                    .toList();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred: " + e.getMessage()));
+        }
+    }
+
 
 
     @PostMapping("/tasks/extension-request/{taskId}")
@@ -485,6 +520,51 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+    @GetMapping("/finance-requests/status/{status}/{employeeId}")
+    @Secured({"ROLE_ADMIN", "ROLE_EMPLOYEE"})
+    public ResponseEntity<List<Map<String, Serializable>>> getRequestsByStatus(
+            @PathVariable String status,
+            @PathVariable Long employeeId) {
+        try {
+            // Log the received parameters
+            logger.debug("Fetching financial requests with status: {} for employeeId: {}", status, employeeId);
+
+            // Fetch filtered requests
+            List<FinancialRequest> requests = financeRequestService.getFinancialRequestsByStatusAndEmployeeId(status, employeeId);
+
+            // Log retrieved requests
+            if (requests != null && !requests.isEmpty()) {
+                logger.debug("Found {} requests with status {} for employeeId: {}", requests.size(), status, employeeId);
+            } else {
+                logger.debug("No requests found with status {} for employeeId: {}", status, employeeId);
+            }
+
+            // Map FinancialRequest to response format
+            List<Map<String, Serializable>> response = requests.stream().map(request -> {
+                Map<String, Serializable> requestMap = new HashMap<>();
+                requestMap.put("id", request.getId());
+                requestMap.put("itemDescription", request.getItemDescription());
+                requestMap.put("amount", request.getAmount());
+                requestMap.put("status", request.getStatus());
+                requestMap.put("createdDate", request.getCreatedDate());
+                requestMap.put("type", request.getType().name());
+                requestMap.put("description", request.getDescription());
+
+                // Add claimDate and requisitionDate with "N/A" as fallback
+                requestMap.put("claimDate", request.getClaimDate() != null ? request.getClaimDate().toString() : "N/A");
+                requestMap.put("requisitionDate", request.getRequisitionDate() != null ? request.getRequisitionDate().toString() : "N/A");
+
+                requestMap.put("proofFileUrl", request.getProofFileUrl() != null ? new String(request.getProofFileUrl()) : null);
+                return requestMap;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Failed to retrieve financial requests by status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
 
 
     @PostMapping(value = "/finance-requests/{employeeId}", consumes = {"multipart/form-data"})

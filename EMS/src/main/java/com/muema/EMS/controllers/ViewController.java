@@ -14,7 +14,10 @@ public class ViewController {
     public String loginPage() {
         return "login"; // This will return the new combined login page
     }
-
+    @GetMapping("/leavesHistory")
+    public String leavesHistory(){
+        return "leavesHistory";
+    }
     @GetMapping("/adminDashboard")
     public String adminDashboard() {
         return "adminDashboard";
